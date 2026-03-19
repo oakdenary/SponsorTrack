@@ -8,24 +8,37 @@ import { EventSponsorsCard } from "@/components/EventSponsorsCard";
 import { StatCard } from "@/components/StatCard";
 import { PipelineCard } from "@/components/PipelineCard";
 import { User, Search, ChevronDown } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
 export default function Dashboard() {
         const router = useRouter();
+        const [userName, setUserName] = useState("");
 
         useEffect(() => {
-        const checkUser = async () => {
-            const { data } = await supabase.auth.getUser();
+    const checkUser = async () => {
+        const { data } = await supabase.auth.getUser();
 
-            if (!data.user) {
+        if (!data.user) {
             router.push("/login");
-            }
-        };
+        } else {
+            const user = data.user;
 
-        checkUser();
-        }, []);
+            // Try to get username from metadata
+            let name = user.user_metadata?.username;
+
+            // Fallback: use email before "@"
+            if (!name && user.email) {
+                name = user.email.split("@")[0];
+            }
+
+            setUserName(name || "User");
+        }
+    };
+
+    checkUser();
+}, []);
     return (
         <div className="flex h-screen w-full bg-[#161719] overflow-hidden font-sans">
             <Sidebar />
@@ -35,7 +48,7 @@ export default function Dashboard() {
                     {/* Header Row */}
                     <div className="flex justify-between items-center w-full gap-4 shrink-0">
                         <div className="flex flex-col pt-1 min-w-0">
-                            <h1 className="text-2xl font-bold text-zinc-900 tracking-tight">Hello Leander,</h1>
+                            <h1 className="text-2xl font-bold text-zinc-900 tracking-tight">Hello {userName || "User"},</h1>
                             <div className="flex items-center gap-4 mt-1.5 border-b border-transparent">
                                 <p className="text-base font-semibold text-zinc-500">Council: <span className="font-bold text-zinc-800 ml-1">Tech Council</span></p>
                                 <div className="flex items-center gap-1 cursor-pointer group hover:bg-zinc-200/50 px-2 py-0.5 rounded-md transition-colors -ml-2">
@@ -58,7 +71,7 @@ export default function Dashboard() {
 
                             {/* Profile Button */}
                             <button className="flex items-center gap-3 bg-white border border-zinc-200/80 hover:border-zinc-300 hover:bg-zinc-50 transition-all text-zinc-800 px-5 py-2 rounded-full font-semibold text-base shadow-sm group">
-                                <span className="hidden sm:inline text-base">Leander</span>
+                                <span className="hidden sm:inline text-base">{userName || "User"}</span>
                                 <div className="bg-zinc-100 rounded-full p-1 group-hover:bg-zinc-200 transition-colors">
                                     <User className="w-5 h-5 text-zinc-600" />
                                 </div>

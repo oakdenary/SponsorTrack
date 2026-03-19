@@ -1,9 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import React, { useState } from 'react';
 import Silk from "@/components/Silk"
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { supabase } from "@/lib/supabase";
 
 // Inline SVGs for social buttons
@@ -23,20 +22,19 @@ const AppleIcon = () => (
 );
 
 export default function LoginPage() {
-    const [mode, setMode] = useState("login"); // "login" | "signup"
     const [email, setEmail] = useState("");
     const [username, setUsername] = useState("");
 
     // Supabase Placeholder Triggers
     const handleGoogleLogin = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-            redirectTo: "http://localhost:3000/dashboard",
-        },
-    });
+        const { error } = await supabase.auth.signInWithOAuth({
+            provider: "google",
+            options: {
+                redirectTo: "http://localhost:3000/dashboard",
+            },
+        });
 
-    if (error) console.error(error.message);
+        if (error) console.error(error.message);
     };
 
     const handleAppleLogin = () => {
@@ -45,23 +43,23 @@ export default function LoginPage() {
     };
 
     const handleMagicLink = async (e) => {
-    e.preventDefault();
+        e.preventDefault();
 
-    const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-            emailRedirectTo: "http://localhost:3000/dashboard",
-            data: {
-                username: username,
+        const { error } = await supabase.auth.signInWithOtp({
+            email,
+            options: {
+                emailRedirectTo: "http://localhost:3000/dashboard",
+                data: {
+                    username: username,
+                },
             },
-        },
-    });
+        });
 
-    if (error) {
-        console.error(error.message);
-    } else {
-        alert("Check your email for the login link!");
-    }
+        if (error) {
+            console.error(error.message);
+        } else {
+            alert("Check your email for the login link!");
+        }
     };
 
     const loginVariants = {
@@ -91,119 +89,61 @@ export default function LoginPage() {
                     className="bg-white rounded-3xl p-8 sm:p-10 w-full max-w-sm shadow-2xl relative overflow-hidden"
                     style={{ minHeight: '480px' }}
                 >
-                    <AnimatePresence mode="wait">
-                        {mode === "login" ? (
-                            <motion.div
-                                key="login-view"
-                                variants={loginVariants}
-                                initial="hidden"
-                                animate="visible"
-                                exit="exit"
-                                className="flex flex-col h-full"
-                            >
-                                <div className="text-center mb-8">
-                                    <h1 className="text-xl font-bold text-zinc-900">Sign in to SponsorTrack</h1>
-                                    <p className="text-sm text-zinc-500 mt-1.5">Welcome back! Please sign in to continue</p>
-                                </div>
+                    <div className="flex flex-col h-full">
+                        <div className="text-center mb-8">
+                            <h1 className="text-xl font-bold text-zinc-900">Sign up to SponsorTrack</h1>
+                            <p className="text-sm text-zinc-500 mt-1.5">Enter your details to get started</p>
+                        </div>
 
-                                <div className="flex flex-col gap-3 mb-6">
-                                    <button onClick={handleGoogleLogin} type="button" className="flex items-center justify-center gap-3 w-full border border-zinc-200 rounded-xl py-2.5 text-sm font-semibold text-zinc-700 hover:bg-zinc-50 transition-colors">
-                                        <GoogleIcon />
-                                        Continue with Google
-                                    </button>
-                                    <button onClick={handleAppleLogin} type="button" className="flex items-center justify-center gap-3 w-full border border-zinc-200 rounded-xl py-2.5 text-sm font-semibold text-zinc-700 hover:bg-zinc-50 transition-colors">
-                                        <AppleIcon />
-                                        Continue with Apple
-                                    </button>
-                                </div>
+                        <form onSubmit={handleMagicLink} className="flex flex-col gap-5 h-full pt-1">
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-xs font-bold text-zinc-900">Username</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
+                                    className="w-full border border-zinc-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#c79c5e]/30 focus:border-[#c79c5e] text-sm text-zinc-900 transition-all font-medium"
+                                    placeholder="Your name or organization"
+                                />
+                            </div>
 
-                                <div className="flex items-center gap-4 mb-6">
-                                    <div className="flex-1 border-t border-zinc-200"></div>
-                                    <span className="text-xs text-zinc-400 font-medium tracking-wide disabled">or</span>
-                                    <div className="flex-1 border-t border-zinc-200"></div>
-                                </div>
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-xs font-bold text-zinc-900">Email Address</label>
+                                <input
+                                    type="email"
+                                    required
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    className="w-full border border-zinc-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#c79c5e]/30 focus:border-[#c79c5e] text-sm text-zinc-900 transition-all font-medium"
+                                    placeholder="leander@somaiya.edu"
+                                />
+                            </div>
 
-                                <form className="flex flex-col gap-4">
-                                    <div className="flex flex-col gap-1.5">
-                                        <label htmlFor="login-email" className="text-xs font-bold text-zinc-900">Email Address</label>
-                                        <input
-                                            type="email"
-                                            id="login-email"
-                                            value={email}
-                                            onChange={(e) => setEmail(e.target.value)}
-                                            className="w-full border border-zinc-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#c79c5e]/30 focus:border-[#c79c5e] text-sm text-zinc-900 transition-all font-medium"
-                                        />
-                                    </div>
+                            <div className="mt-4">
+                                <button type="submit" className="w-full bg-[#c79c5e] hover:bg-[#b58c53] text-white font-bold rounded-xl py-3 shadow-[0_4px_14px_0_rgba(199,156,94,0.3)] transition-all text-sm">
+                                    Send Magic Link
+                                </button>
+                            </div>
+                        </form>
 
-                                    <Link href="/dashboard" className="w-full">
-                                        <button type="button" className="w-full bg-zinc-900 hover:bg-zinc-800 text-white font-bold rounded-xl py-3 mt-2 shadow-[0_4px_14px_0_rgba(0,0,0,0.15)] transition-all text-sm">
-                                            Continue
-                                        </button>
-                                    </Link>
-                                </form>
+                        <div className="flex items-center gap-4 my-6">
+                            <div className="flex-1 border-t border-zinc-200"></div>
+                            <span className="text-xs text-zinc-400 font-medium tracking-wide">or</span>
+                            <div className="flex-1 border-t border-zinc-200"></div>
+                        </div>
 
-                                <p className="text-xs text-center text-zinc-500 font-medium mt-auto pt-6">
-                                    Don't have an account? <button type="button" onClick={() => setMode("signup")} className="font-bold text-zinc-900 hover:underline">Sign up</button>
-                                </p>
-                            </motion.div>
-                        ) : (
-                            <motion.div
-                                key="signup-view"
-                                variants={loginVariants}
-                                initial="hidden"
-                                animate="visible"
-                                exit="exit"
-                                className="flex flex-col h-full"
-                            >
-                                <div className="text-center mb-8">
-                                    <h1 className="text-xl font-bold text-zinc-900">Create your account</h1>
-                                    <p className="text-sm text-zinc-500 mt-1.5">Enter your email to get a secure login link</p>
-                                </div>
+                        <div className="flex flex-col items-center gap-4">
+                            <p className="text-xs text-zinc-500 font-medium">
+                                Already a user?
+                            </p>
 
-                                <form onSubmit={handleMagicLink} className="flex flex-col gap-5 h-full pt-1">
-                                    <div className="flex flex-col gap-1.5">
-                                        <label htmlFor="signup-username" className="text-xs font-bold text-zinc-900">Username</label>
-                                        <input
-                                            type="text"
-                                            id="signup-username"
-                                            required
-                                            value={username}
-                                            onChange={(e) => setUsername(e.target.value)}
-                                            className="w-full border border-zinc-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#c79c5e]/30 focus:border-[#c79c5e] text-sm text-zinc-900 transition-all font-medium placeholder:text-zinc-300"
-                                            placeholder="Your name or organization"
-                                        />
-                                    </div>
-
-                                    <div className="flex flex-col gap-1.5">
-                                        <label htmlFor="signup-email" className="text-xs font-bold text-zinc-900">Email Address</label>
-                                        <input
-                                            type="email"
-                                            id="signup-email"
-                                            required
-                                            value={email}
-                                            onChange={(e) => setEmail(e.target.value)}
-                                            className="w-full border border-zinc-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#c79c5e]/30 focus:border-[#c79c5e] text-sm text-zinc-900 transition-all font-medium placeholder:text-zinc-300"
-                                            placeholder="leander@somaiya.edu"
-                                        />
-                                    </div>
-
-                                    <div className="mt-auto pt-6 flex flex-col items-center">
-                                        <button type="submit" className="w-full bg-[#c79c5e] hover:bg-[#b58c53] text-white font-bold rounded-xl py-3 shadow-[0_4px_14px_0_rgba(199,156,94,0.3)] transition-all text-sm mb-4">
-                                            Send Magic Link
-                                        </button>
-
-                                        <p className="text-[11px] text-center text-zinc-500 font-medium leading-relaxed px-2 mb-6">
-                                            We'll email you a secure link to sign up and log in instantly.
-                                        </p>
-
-                                        <p className="text-xs text-center text-zinc-500 font-medium">
-                                            Already have an account? <button type="button" onClick={() => setMode("login")} className="font-bold text-zinc-900 hover:underline">Sign in</button>
-                                        </p>
-                                    </div>
-                                </form>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+                            <button onClick={handleGoogleLogin} type="button" className="flex items-center justify-center gap-3 w-full border border-zinc-200 rounded-xl py-2.5 text-sm font-semibold text-zinc-700 hover:bg-zinc-50 transition-colors">
+                                <GoogleIcon />
+                                Continue with Google
+                            </button>
+                        </div>
+                    </div>
                 </motion.div>
             </div>
 
