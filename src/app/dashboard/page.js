@@ -8,8 +8,24 @@ import { EventSponsorsCard } from "@/components/EventSponsorsCard";
 import { StatCard } from "@/components/StatCard";
 import { PipelineCard } from "@/components/PipelineCard";
 import { User, Search, ChevronDown } from "lucide-react";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 
 export default function Dashboard() {
+        const router = useRouter();
+
+        useEffect(() => {
+        const checkUser = async () => {
+            const { data } = await supabase.auth.getUser();
+
+            if (!data.user) {
+            router.push("/login");
+            }
+        };
+
+        checkUser();
+        }, []);
     return (
         <div className="flex h-screen w-full bg-[#161719] overflow-hidden font-sans">
             <Sidebar />

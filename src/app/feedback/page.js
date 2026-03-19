@@ -77,7 +77,7 @@ export default function FeedbackPage() {
                                         required
                                         value={name}
                                         onChange={(e) => setName(e.target.value)}
-                                        placeholder="Jane Doe"
+                                        placeholder="leander"
                                         className="w-full border border-zinc-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#c79c5e]/30 focus:border-[#c79c5e] bg-zinc-50/50 hover:bg-zinc-50 transition-all font-medium text-[15px] text-zinc-900 placeholder:text-zinc-400"
                                     />
                                 </div>
@@ -90,7 +90,7 @@ export default function FeedbackPage() {
                                         required
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
-                                        placeholder="jane@example.com"
+                                        placeholder="leander@somaiya.edu"
                                         className="w-full border border-zinc-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#c79c5e]/30 focus:border-[#c79c5e] bg-zinc-50/50 hover:bg-zinc-50 transition-all font-medium text-[15px] text-zinc-900 placeholder:text-zinc-400"
                                     />
                                 </div>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import React, { useState } from 'react';
 import Silk from "@/components/Silk"
 import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "@/lib/supabase";
 
 // Inline SVGs for social buttons
 const GoogleIcon = () => (
@@ -27,9 +28,15 @@ export default function LoginPage() {
     const [username, setUsername] = useState("");
 
     // Supabase Placeholder Triggers
-    const handleGoogleLogin = () => {
-        console.log("Supabase OAuth: Google");
-        // supabase.auth.signInWithOAuth({ provider: "google" })
+    const handleGoogleLogin = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+            redirectTo: "http://localhost:3000/dashboard",
+        },
+    });
+
+    if (error) console.error(error.message);
     };
 
     const handleAppleLogin = () => {
@@ -37,15 +44,24 @@ export default function LoginPage() {
         // supabase.auth.signInWithOAuth({ provider: "apple" })
     };
 
-    const handleMagicLink = (e) => {
-        e.preventDefault();
-        console.log("Supabase OTP Signup:", { email, username });
-        /* 
-        supabase.auth.signInWithOtp({
-            email,
-            options: { data: { username } }
-        }) 
-        */
+    const handleMagicLink = async (e) => {
+    e.preventDefault();
+
+    const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+            emailRedirectTo: "http://localhost:3000/dashboard",
+            data: {
+                username: username,
+            },
+        },
+    });
+
+    if (error) {
+        console.error(error.message);
+    } else {
+        alert("Check your email for the login link!");
+    }
     };
 
     const loginVariants = {
@@ -167,7 +183,7 @@ export default function LoginPage() {
                                             value={email}
                                             onChange={(e) => setEmail(e.target.value)}
                                             className="w-full border border-zinc-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#c79c5e]/30 focus:border-[#c79c5e] text-sm text-zinc-900 transition-all font-medium placeholder:text-zinc-300"
-                                            placeholder="jane@example.com"
+                                            placeholder="leander@somaiya.edu"
                                         />
                                     </div>
 
