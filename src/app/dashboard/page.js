@@ -13,12 +13,12 @@ export default function Dashboard() {
     return (
         <div className="flex h-screen w-full bg-[#161719] overflow-hidden font-sans">
             <Sidebar />
-            <main className="flex-1 bg-[#f4f4f5] rounded-tl-[2rem] rounded-bl-[2rem] p-8 md:px-10 flex flex-col h-screen shadow-2xl border-l border-white/5">
-                <div className="flex flex-col gap-8 max-w-[1400px] w-full mx-auto h-full">
+            <main className="flex-1 bg-[#f4f4f5] rounded-tl-[2rem] rounded-bl-[2rem] p-6 md:px-8 flex flex-col h-screen overflow-y-auto shadow-2xl border-l border-white/5">
+                <div className="flex flex-col gap-5 max-w-[1400px] w-full mx-auto">
 
                     {/* Header Row */}
-                    <div className="flex justify-between items-center w-full gap-5">
-                        <div className="flex flex-col pt-1">
+                    <div className="flex justify-between items-center w-full gap-4 shrink-0">
+                        <div className="flex flex-col pt-1 min-w-0">
                             <h1 className="text-2xl font-bold text-zinc-900 tracking-tight">Hello Leander,</h1>
                             <div className="flex items-center gap-4 mt-1.5 border-b border-transparent">
                                 <p className="text-base font-semibold text-zinc-500">Council: <span className="font-bold text-zinc-800 ml-1">Tech Council</span></p>
@@ -29,7 +29,7 @@ export default function Dashboard() {
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-4 lg:gap-5">
+                        <div className="flex items-center gap-4 lg:gap-5 shrink-0">
                             {/* Universal Search Bar */}
                             <div className="relative group hidden sm:block">
                                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 group-focus-within:text-[#c79c5e] transition-colors" />
@@ -51,48 +51,47 @@ export default function Dashboard() {
                     </div>
 
                     {/* Main Content Dashboard Grid */}
-                    <div className="flex-1 flex items-center justify-center">
-                        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 w-full">
+                    <div className="grid grid-cols-12 gap-5 pb-4">
 
-                            {/* Left Section (Spans 8 cols) */}
-                            <div className="xl:col-span-9 flex flex-col gap-6">
+                        {/* Left Section (9 cols) */}
+                        <div className="col-span-12 xl:col-span-9 flex flex-col gap-5">
 
-                                {/* Row 1: 3 Slots */}
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                                    <StatCard title="Total Sponsorship Secured" amount="54,812" trend="up" trendValue="+2.5" />
-                                    <StatCard title="Pending Sponsorship" amount="36,254" trend="down" trendValue="-3.5" />
-                                    <StatCard title="Total Revenue" amount="126,348" trend="up" trendValue="+4.5" />
-                                </div>
-
-                                {/* Row 2: Revenue Flow & Event Sponsors (Replacing Monthly Expenses) */}
-                                <div className="flex flex-col sm:flex-row gap-6 h-auto sm:h-[320px]">
-                                    <div className="flex-[2] h-full min-h-[300px] sm:min-h-0">
-                                        <RevenueFlowCard />
-                                    </div>
-                                    <div className="flex-[1] h-full min-h-[300px] sm:min-h-0">
-                                        <EventSponsorsCard />
-                                    </div>
-                                </div>
-
-                                {/* Row 3: Horizontal Calendar */}
-                                <div className="h-auto min-h-[220px]">
-                                    <HorizontalCalendarCard />
-                                </div>
-
+                            {/* Row 1: 3 Stat Cards */}
+                            <div className="grid grid-cols-3 gap-5">
+                                <StatCard title="Total Sponsorship Secured" amount="54,812" trend="up" trendValue="+2.5" />
+                                <StatCard title="Pending Sponsorship" amount="36,254" trend="down" trendValue="-3.5" />
+                                <StatCard title="Total Revenue" amount="126,348" trend="up" trendValue="+4.5" />
                             </div>
 
-                            {/* Right Section (Spans 4 cols): Recent Activity & Pipeline */}
-                            <div className="xl:col-span-3 flex flex-col gap-6 h-full min-h-[500px]">
-                                <div className="flex-[1.5] min-h-[350px]">
-                                    <RecentActivityCard />
+                            {/* Row 2: Revenue Flow & Event Sponsors */}
+                            <div className="flex flex-row gap-5 h-[340px]">
+                                <div className="flex-[2] h-full min-w-0">
+                                    <RevenueFlowCard />
                                 </div>
-                                <div className="flex-1 min-h-[200px]">
-                                    <PipelineCard />
+                                <div className="flex-[1] h-full min-w-0">
+                                    <EventSponsorsCard />
                                 </div>
+                            </div>
+
+                            {/* Row 3: Horizontal Calendar */}
+                            <div className="h-[240px]">
+                                <HorizontalCalendarCard />
                             </div>
 
                         </div>
+
+                        {/* Right Section (3 cols): Recent Activity & Pipeline */}
+                        <div className="col-span-12 xl:col-span-3 flex flex-col gap-5">
+                            <div className="flex-[1.5] min-h-[300px]">
+                                <RecentActivityCard />
+                            </div>
+                            <div className="shrink-0">
+                                <PipelineCard />
+                            </div>
+                        </div>
+
                     </div>
+
                 </div>
             </main>
         </div>

@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import React from 'react';
+import React, { useState } from 'react';
 import Silk from "@/components/Silk"
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 // Inline SVGs for social buttons
 const GoogleIcon = () => (
@@ -22,9 +22,41 @@ const AppleIcon = () => (
 );
 
 export default function LoginPage() {
+    const [mode, setMode] = useState("login"); // "login" | "signup"
+    const [email, setEmail] = useState("");
+    const [username, setUsername] = useState("");
+
+    // Supabase Placeholder Triggers
+    const handleGoogleLogin = () => {
+        console.log("Supabase OAuth: Google");
+        // supabase.auth.signInWithOAuth({ provider: "google" })
+    };
+
+    const handleAppleLogin = () => {
+        console.log("Supabase OAuth: Apple");
+        // supabase.auth.signInWithOAuth({ provider: "apple" })
+    };
+
+    const handleMagicLink = (e) => {
+        e.preventDefault();
+        console.log("Supabase OTP Signup:", { email, username });
+        /* 
+        supabase.auth.signInWithOtp({
+            email,
+            options: { data: { username } }
+        }) 
+        */
+    };
+
+    const loginVariants = {
+        hidden: { opacity: 0, x: -20 },
+        visible: { opacity: 1, x: 0, transition: { duration: 0.3, ease: "easeOut" } },
+        exit: { opacity: 0, x: 20, transition: { duration: 0.2, ease: "easeIn" } }
+    };
+
     return (
         <div className="flex h-screen w-full overflow-hidden font-sans bg-[#161719]">
-            <div className="absolute inset-0 z-0">
+            <div className="absolute inset-0 z-0 pointer-events-none">
                 <Silk
                     speed={5}
                     scale={1}
@@ -35,55 +67,127 @@ export default function LoginPage() {
             </div>
 
             {/* Left Pane - Login Card centered */}
-            <div className="flex-1 flex items-center justify-center p-6 relative z-10">
+            <div className="flex-1 flex items-center justify-center p-6 relative z-10 w-full h-full">
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-                    className="bg-white rounded-3xl p-8 sm:p-10 w-full max-w-sm shadow-2xl"
+                    className="bg-white rounded-3xl p-8 sm:p-10 w-full max-w-sm shadow-2xl relative overflow-hidden"
+                    style={{ minHeight: '480px' }}
                 >
-                    <div className="text-center mb-8">
-                        <h1 className="text-xl font-bold text-zinc-900">Sign in to SponsorTrack</h1>
-                        <p className="text-sm text-zinc-500 mt-1.5">Welcome back! Please sign in to continue</p>
-                    </div>
+                    <AnimatePresence mode="wait">
+                        {mode === "login" ? (
+                            <motion.div
+                                key="login-view"
+                                variants={loginVariants}
+                                initial="hidden"
+                                animate="visible"
+                                exit="exit"
+                                className="flex flex-col h-full"
+                            >
+                                <div className="text-center mb-8">
+                                    <h1 className="text-xl font-bold text-zinc-900">Sign in to SponsorTrack</h1>
+                                    <p className="text-sm text-zinc-500 mt-1.5">Welcome back! Please sign in to continue</p>
+                                </div>
 
-                    <div className="flex flex-col gap-3 mb-6">
-                        <button className="flex items-center justify-center gap-3 w-full border border-zinc-200 rounded-xl py-2.5 text-sm font-semibold text-zinc-700 hover:bg-zinc-50 transition-colors">
-                            <GoogleIcon />
-                            Continue with Google
-                        </button>
-                        <button className="flex items-center justify-center gap-3 w-full border border-zinc-200 rounded-xl py-2.5 text-sm font-semibold text-zinc-700 hover:bg-zinc-50 transition-colors">
-                            <AppleIcon />
-                            Continue with Apple
-                        </button>
-                    </div>
+                                <div className="flex flex-col gap-3 mb-6">
+                                    <button onClick={handleGoogleLogin} type="button" className="flex items-center justify-center gap-3 w-full border border-zinc-200 rounded-xl py-2.5 text-sm font-semibold text-zinc-700 hover:bg-zinc-50 transition-colors">
+                                        <GoogleIcon />
+                                        Continue with Google
+                                    </button>
+                                    <button onClick={handleAppleLogin} type="button" className="flex items-center justify-center gap-3 w-full border border-zinc-200 rounded-xl py-2.5 text-sm font-semibold text-zinc-700 hover:bg-zinc-50 transition-colors">
+                                        <AppleIcon />
+                                        Continue with Apple
+                                    </button>
+                                </div>
 
-                    <div className="flex items-center gap-4 mb-6">
-                        <div className="flex-1 border-t border-zinc-200"></div>
-                        <span className="text-xs text-zinc-400 font-medium">or</span>
-                        <div className="flex-1 border-t border-zinc-200"></div>
-                    </div>
+                                <div className="flex items-center gap-4 mb-6">
+                                    <div className="flex-1 border-t border-zinc-200"></div>
+                                    <span className="text-xs text-zinc-400 font-medium tracking-wide disabled">or</span>
+                                    <div className="flex-1 border-t border-zinc-200"></div>
+                                </div>
 
-                    <form className="flex flex-col gap-4">
-                        <div className="flex flex-col gap-1.5">
-                            <label htmlFor="email" className="text-xs font-bold text-zinc-900">Email Address</label>
-                            <input
-                                type="email"
-                                id="email"
-                                className="w-full border border-zinc-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#c79c5e]/30 focus:border-[#c79c5e] text-sm text-zinc-900 transition-all font-medium"
-                            />
-                        </div>
+                                <form className="flex flex-col gap-4">
+                                    <div className="flex flex-col gap-1.5">
+                                        <label htmlFor="login-email" className="text-xs font-bold text-zinc-900">Email Address</label>
+                                        <input
+                                            type="email"
+                                            id="login-email"
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            className="w-full border border-zinc-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#c79c5e]/30 focus:border-[#c79c5e] text-sm text-zinc-900 transition-all font-medium"
+                                        />
+                                    </div>
 
-                        <Link href="/dashboard" className="w-full">
-                            <button type="button" className="w-full bg-zinc-900 hover:bg-zinc-800 text-white font-bold rounded-xl py-3 mt-2 shadow-md transition-colors text-sm">
-                                Continue
-                            </button>
-                        </Link>
-                    </form>
+                                    <Link href="/dashboard" className="w-full">
+                                        <button type="button" className="w-full bg-zinc-900 hover:bg-zinc-800 text-white font-bold rounded-xl py-3 mt-2 shadow-[0_4px_14px_0_rgba(0,0,0,0.15)] transition-all text-sm">
+                                            Continue
+                                        </button>
+                                    </Link>
+                                </form>
 
-                    <p className="text-xs text-center text-zinc-500 font-medium mt-6">
-                        Don't have an account? <Link href="#" className="font-bold text-zinc-900 hover:underline">Sign up</Link>
-                    </p>
+                                <p className="text-xs text-center text-zinc-500 font-medium mt-auto pt-6">
+                                    Don't have an account? <button type="button" onClick={() => setMode("signup")} className="font-bold text-zinc-900 hover:underline">Sign up</button>
+                                </p>
+                            </motion.div>
+                        ) : (
+                            <motion.div
+                                key="signup-view"
+                                variants={loginVariants}
+                                initial="hidden"
+                                animate="visible"
+                                exit="exit"
+                                className="flex flex-col h-full"
+                            >
+                                <div className="text-center mb-8">
+                                    <h1 className="text-xl font-bold text-zinc-900">Create your account</h1>
+                                    <p className="text-sm text-zinc-500 mt-1.5">Enter your email to get a secure login link</p>
+                                </div>
+
+                                <form onSubmit={handleMagicLink} className="flex flex-col gap-5 h-full pt-1">
+                                    <div className="flex flex-col gap-1.5">
+                                        <label htmlFor="signup-username" className="text-xs font-bold text-zinc-900">Username</label>
+                                        <input
+                                            type="text"
+                                            id="signup-username"
+                                            required
+                                            value={username}
+                                            onChange={(e) => setUsername(e.target.value)}
+                                            className="w-full border border-zinc-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#c79c5e]/30 focus:border-[#c79c5e] text-sm text-zinc-900 transition-all font-medium placeholder:text-zinc-300"
+                                            placeholder="Your name or organization"
+                                        />
+                                    </div>
+
+                                    <div className="flex flex-col gap-1.5">
+                                        <label htmlFor="signup-email" className="text-xs font-bold text-zinc-900">Email Address</label>
+                                        <input
+                                            type="email"
+                                            id="signup-email"
+                                            required
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            className="w-full border border-zinc-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#c79c5e]/30 focus:border-[#c79c5e] text-sm text-zinc-900 transition-all font-medium placeholder:text-zinc-300"
+                                            placeholder="jane@example.com"
+                                        />
+                                    </div>
+
+                                    <div className="mt-auto pt-6 flex flex-col items-center">
+                                        <button type="submit" className="w-full bg-[#c79c5e] hover:bg-[#b58c53] text-white font-bold rounded-xl py-3 shadow-[0_4px_14px_0_rgba(199,156,94,0.3)] transition-all text-sm mb-4">
+                                            Send Magic Link
+                                        </button>
+
+                                        <p className="text-[11px] text-center text-zinc-500 font-medium leading-relaxed px-2 mb-6">
+                                            We'll email you a secure link to sign up and log in instantly.
+                                        </p>
+
+                                        <p className="text-xs text-center text-zinc-500 font-medium">
+                                            Already have an account? <button type="button" onClick={() => setMode("login")} className="font-bold text-zinc-900 hover:underline">Sign in</button>
+                                        </p>
+                                    </div>
+                                </form>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </motion.div>
             </div>
 
@@ -111,15 +215,15 @@ export default function LoginPage() {
 
                     <div className="flex flex-col gap-6 w-full max-w-md mx-auto">
                         <div className="flex items-start gap-3 w-fit mx-auto">
-                            <span className="w-2 h-2 bg-zinc-800 rounded-full shrink-0"></span>
+                            <span className="w-2 h-2 bg-zinc-800 rounded-full shrink-0 mt-2"></span>
                             <span className="text-zinc-800 font-bold text-lg text-left">Track sponsorship deals in real time</span>
                         </div>
                         <div className="flex items-start gap-3 w-fit mx-auto">
-                            <span className="w-2 h-2 bg-zinc-800 rounded-full shrink-0"></span>
+                            <span className="w-2 h-2 bg-zinc-800 rounded-full shrink-0 mt-2"></span>
                             <span className="text-zinc-800 font-bold text-lg text-left">Never miss follow-ups with reminders</span>
                         </div>
                         <div className="flex items-start gap-3 w-fit mx-auto">
-                            <span className="w-2 h-2 bg-zinc-800 rounded-full shrink-0"></span>
+                            <span className="w-2 h-2 bg-zinc-800 rounded-full shrink-0 mt-2"></span>
                             <span className="text-zinc-800 font-bold text-lg text-left">Monitor revenue and performance easily</span>
                         </div>
                     </div>

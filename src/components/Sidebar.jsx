@@ -12,6 +12,7 @@ export function Sidebar() {
     { name: 'Tracker', href: '/tracker' },
     { name: 'Profile', href: '/profile' },
     { name: 'History', href: '/history' },
+    { name: 'Feedback', href: '/feedback' },
   ];
 
   return (
