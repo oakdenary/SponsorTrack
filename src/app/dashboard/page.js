@@ -12,9 +12,14 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
+const inputClass =
+  "w-full border border-zinc-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#c79c5e]/30";
+
 export default function Dashboard() {
         const router = useRouter();
         const [userName, setUserName] = useState("");
+        const [showModal, setShowModal] = useState(false);
+        const [contributionType, setContributionType] = useState("");
 
         useEffect(() => {
     const checkUser = async () => {
@@ -59,6 +64,12 @@ export default function Dashboard() {
                         </div>
 
                         <div className="flex items-center gap-4 lg:gap-5 shrink-0">
+                            <button
+                                onClick={() => setShowModal(true)}
+                                className="bg-[#c79c5e] hover:bg-[#b58c53] text-white font-semibold px-4 py-2 rounded-full text-sm shadow-sm transition-all"
+                            >
+                                + Add Sponsor
+                            </button>
                             {/* Universal Search Bar */}
                             <div className="relative group hidden sm:block">
                                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 group-focus-within:text-[#c79c5e] transition-colors" />
@@ -122,6 +133,59 @@ export default function Dashboard() {
                     </div>
 
                 </div>
+                {showModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center">
+                        {/* Blur background */}
+                        <div
+                            className="absolute inset-0 bg-black/20 backdrop-blur-sm"
+                            onClick={() => setShowModal(false)}
+                        ></div>
+
+                        {/* Modal */}
+                        <div className="relative bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl z-10">
+                            <h2 className="text-lg font-bold text-zinc-900 mb-4">
+                                Add Sponsor
+                            </h2>
+
+                            <div className="flex flex-col gap-4">
+                                <input className={inputClass} placeholder="Name" />
+                                <input className={inputClass} placeholder="Phone Number" />
+                                <input className={inputClass} placeholder="Category" />
+                                <input className={inputClass} placeholder="Status" />
+
+                                {/* Contribution Type */}
+                                <select
+                                    value={contributionType}
+                                    onChange={(e) => setContributionType(e.target.value)}
+                                    className={inputClass}
+                                >
+                                    <option value="">Contribution Type</option>
+                                    <option value="money">Money</option>
+                                    <option value="in-kind">In Kind</option>
+                                </select>
+
+                                {contributionType === "money" && (
+                                    <>
+                                        <input className={inputClass} placeholder="Amount" />
+                                        <input className={inputClass} placeholder="Deliverables" />
+                                    </>
+                                )}
+                            </div>
+
+                            <div className="flex justify-end gap-3 mt-6">
+                                <button
+                                    onClick={() => setShowModal(false)}
+                                    className="px-4 py-2 rounded-lg bg-zinc-100 text-zinc-700"
+                                >
+                                    Cancel
+                                </button>
+                                <button className="px-4 py-2 rounded-lg bg-[#c79c5e] text-white font-semibold">
+                                    Save
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </main>
         </div>
     );
