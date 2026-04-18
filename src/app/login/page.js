@@ -24,6 +24,7 @@ const AppleIcon = () => (
 export default function LoginPage() {
     const [email, setEmail] = useState("");
     const [username, setUsername] = useState("");
+    const [councilId, setCouncilId] = useState("");
 
     // Supabase Placeholder Triggers
     const handleGoogleLogin = async () => {
@@ -48,17 +49,19 @@ export default function LoginPage() {
         const { error } = await supabase.auth.signInWithOtp({
             email,
             options: {
-                emailRedirectTo: "http://localhost:3000/dashboard",
-                data: {
-                    username: username,
-                },
+            emailRedirectTo: "http://localhost:3000/dashboard",
+            data: {
+                username: username,
+                councilid: councilId,
+            },
             },
         });
 
         if (error) {
             console.error(error.message);
+            alert(error.message);
         } else {
-            alert("Check your email for the login link!");
+            alert("Magic link sent! Check your email.");
         }
     };
 
@@ -86,38 +89,55 @@ export default function LoginPage() {
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-                    className="bg-white rounded-3xl p-8 sm:p-10 w-full max-w-sm shadow-2xl relative overflow-hidden"
+                    className="bg-white dark:bg-black rounded-3xl p-8 sm:p-10 w-full max-w-sm shadow-2xl relative overflow-hidden ring-1 ring-black/5 dark:ring-white/10"
                     style={{ minHeight: '480px' }}
                 >
                     <div className="flex flex-col h-full">
                         <div className="text-center mb-8">
-                            <h1 className="text-xl font-bold text-zinc-900">Sign up to SponsorTrack</h1>
-                            <p className="text-sm text-zinc-500 mt-1.5">Enter your details to get started</p>
+                            <h1 className="text-xl font-bold text-zinc-900 dark:text-white">Sign up to SponsorTrack</h1>
+                            <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1.5">Enter your details to get started</p>
                         </div>
 
                         <form onSubmit={handleMagicLink} className="flex flex-col gap-5 h-full pt-1">
                             <div className="flex flex-col gap-1.5">
-                                <label className="text-xs font-bold text-zinc-900">Username</label>
+                                <label className="text-xs font-bold text-zinc-900 dark:text-zinc-300">Username</label>
                                 <input
                                     type="text"
                                     required
                                     value={username}
                                     onChange={(e) => setUsername(e.target.value)}
-                                    className="w-full border border-zinc-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#c79c5e]/30 focus:border-[#c79c5e] text-sm text-zinc-900 transition-all font-medium"
+                                    className="w-full border border-zinc-200 dark:border-zinc-800 bg-transparent rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#c79c5e]/30 focus:border-[#c79c5e] text-sm text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-600 transition-all font-medium"
                                     placeholder="Your name or organization"
                                 />
                             </div>
 
                             <div className="flex flex-col gap-1.5">
-                                <label className="text-xs font-bold text-zinc-900">Email Address</label>
+                                <label className="text-xs font-bold text-zinc-900 dark:text-zinc-300">Email Address</label>
                                 <input
                                     type="email"
                                     required
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full border border-zinc-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#c79c5e]/30 focus:border-[#c79c5e] text-sm text-zinc-900 transition-all font-medium"
+                                    className="w-full border border-zinc-200 dark:border-zinc-800 bg-transparent rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#c79c5e]/30 focus:border-[#c79c5e] text-sm text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-600 transition-all font-medium"
                                     placeholder="leander@somaiya.edu"
                                 />
+                            </div>
+
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-xs font-bold text-zinc-900 dark:text-zinc-300">Council</label>
+                                <select
+                                    required
+                                    value={councilId}
+                                    onChange={(e) => setCouncilId(e.target.value)}
+                                    className="w-full border border-zinc-200 dark:border-zinc-800 bg-transparent rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#c79c5e]/30 focus:border-[#c79c5e] text-sm text-zinc-900 dark:text-white transition-all font-medium appearance-none"
+                                >
+                                    <option className="dark:bg-[#111]" value="">Select your council</option>
+                                    <option className="dark:bg-[#111]" value="1">CodeCell</option>
+                                    <option className="dark:bg-[#111]" value="2">CSI</option>
+                                    <option className="dark:bg-[#111]" value="3">BloomBox</option>
+                                    <option className="dark:bg-[#111]" value="4">Student Council</option>
+                                    <option className="dark:bg-[#111]" value="5">Mega Project</option>
+                                </select>
                             </div>
 
                             <div className="mt-4">
@@ -128,17 +148,17 @@ export default function LoginPage() {
                         </form>
 
                         <div className="flex items-center gap-4 my-6">
-                            <div className="flex-1 border-t border-zinc-200"></div>
-                            <span className="text-xs text-zinc-400 font-medium tracking-wide">or</span>
-                            <div className="flex-1 border-t border-zinc-200"></div>
+                            <div className="flex-1 border-t border-zinc-200 dark:border-zinc-800"></div>
+                            <span className="text-xs text-zinc-400 dark:text-zinc-600 font-medium tracking-wide">or</span>
+                            <div className="flex-1 border-t border-zinc-200 dark:border-zinc-800"></div>
                         </div>
 
                         <div className="flex flex-col items-center gap-4">
-                            <p className="text-xs text-zinc-500 font-medium">
+                            <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
                                 Already a user?
                             </p>
 
-                            <button onClick={handleGoogleLogin} type="button" className="flex items-center justify-center gap-3 w-full border border-zinc-200 rounded-xl py-2.5 text-sm font-semibold text-zinc-700 hover:bg-zinc-50 transition-colors">
+                            <button onClick={handleGoogleLogin} type="button" className="flex items-center justify-center gap-3 w-full border border-zinc-200 dark:border-zinc-800 rounded-xl py-2.5 text-sm font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
                                 <GoogleIcon />
                                 Continue with Google
                             </button>
@@ -152,7 +172,7 @@ export default function LoginPage() {
                 initial={{ x: '100%' }}
                 animate={{ x: 0 }}
                 transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                className="flex-1 bg-[#E8E8E8] rounded-tl-[3rem] rounded-bl-[3rem] p-12 lg:p-20 relative flex flex-col justify-between hidden md:flex z-20 shadow-[-10px_0_30px_rgba(0,0,0,0.1)]"
+                className="flex-1 bg-[#E8E8E8] dark:bg-[#0c0c0c] border-l dark:border-zinc-800/60 rounded-tl-[3rem] rounded-bl-[3rem] p-12 lg:p-20 relative flex flex-col justify-between hidden md:flex z-20 shadow-[-10px_0_30px_rgba(0,0,0,0.1)] transition-colors"
             >
                 {/* LOGO SPACE */}
                 <div className="flex justify-center mb-12">
@@ -162,31 +182,31 @@ export default function LoginPage() {
                 </div>
 
                 <div className="flex-1 flex flex-col justify-center items-center text-center max-w-xl mx-auto">
-                    <h1 className="text-4xl lg:text-5xl font-extrabold text-zinc-900 mb-6 leading-tight tracking-tight">
+                    <h1 className="text-4xl lg:text-5xl font-extrabold text-zinc-900 dark:text-zinc-100 mb-6 leading-tight tracking-tight">
                         Simplify Sponsorship Management
                     </h1>
-                    <p className="text-zinc-600 text-lg lg:text-xl font-medium mb-12 leading-relaxed">
+                    <p className="text-zinc-600 dark:text-zinc-400 text-lg lg:text-xl font-medium mb-12 leading-relaxed">
                         SponsorTrack helps event organizers manage sponsor relationships, track deal progress, and monitor revenue — all in one place.
                     </p>
 
                     <div className="flex flex-col gap-6 w-full max-w-md mx-auto">
                         <div className="flex items-start gap-3 w-fit mx-auto">
-                            <span className="w-2 h-2 bg-zinc-800 rounded-full shrink-0 mt-2"></span>
-                            <span className="text-zinc-800 font-bold text-lg text-left">Track sponsorship deals in real time</span>
+                            <span className="w-2 h-2 bg-zinc-800 dark:bg-zinc-200 rounded-full shrink-0 mt-2"></span>
+                            <span className="text-zinc-800 dark:text-zinc-300 font-bold text-lg text-left">Track sponsorship deals in real time</span>
                         </div>
                         <div className="flex items-start gap-3 w-fit mx-auto">
-                            <span className="w-2 h-2 bg-zinc-800 rounded-full shrink-0 mt-2"></span>
-                            <span className="text-zinc-800 font-bold text-lg text-left">Never miss follow-ups with reminders</span>
+                            <span className="w-2 h-2 bg-zinc-800 dark:bg-zinc-200 rounded-full shrink-0 mt-2"></span>
+                            <span className="text-zinc-800 dark:text-zinc-300 font-bold text-lg text-left">Never miss follow-ups with reminders</span>
                         </div>
                         <div className="flex items-start gap-3 w-fit mx-auto">
-                            <span className="w-2 h-2 bg-zinc-800 rounded-full shrink-0 mt-2"></span>
-                            <span className="text-zinc-800 font-bold text-lg text-left">Monitor revenue and performance easily</span>
+                            <span className="w-2 h-2 bg-zinc-800 dark:bg-zinc-200 rounded-full shrink-0 mt-2"></span>
+                            <span className="text-zinc-800 dark:text-zinc-300 font-bold text-lg text-left">Monitor revenue and performance easily</span>
                         </div>
                     </div>
                 </div>
 
                 {/* Small branding tagline */}
-                <div className="mt-12 text-zinc-500 font-bold text-sm justify-center text-center">
+                <div className="mt-12 text-zinc-500 dark:text-zinc-600 font-bold text-sm justify-center text-center">
                     Built for event teams and marketing professionals.
                 </div>
             </motion.div>

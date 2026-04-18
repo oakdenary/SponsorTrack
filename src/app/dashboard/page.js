@@ -11,6 +11,7 @@ import { User, Search, ChevronDown } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const inputClass =
   "w-full border border-zinc-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#c79c5e]/30";
@@ -18,6 +19,8 @@ const inputClass =
 export default function Dashboard() {
         const router = useRouter();
         const [userName, setUserName] = useState("");
+        const [userData, setUserData] = useState({});
+        const [stats, setStats] = useState({});
         const [showModal, setShowModal] = useState(false);
         const [contributionType, setContributionType] = useState("");
 
@@ -39,26 +42,55 @@ export default function Dashboard() {
             }
 
             setUserName(name || "User");
+
+            // Fetch full user details from API
+            try {
+                const res = await fetch(`/api/user?id=${user.id}`);
+                const userInfo = await res.json();
+                if (!userInfo.error) {
+                    setUserData(userInfo);
+                    if (userInfo.username) setUserName(userInfo.username);
+                }
+            } catch (err) {
+                console.error("Failed to fetch user info:", err);
+            }
         }
     };
 
     checkUser();
 }, []);
+
+    // Fetch dashboard stats
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const res = await fetch("/api/dashboard");
+                const data = await res.json();
+                if (!data.error) {
+                    setStats(data);
+                }
+            } catch (err) {
+                console.error("Failed to fetch dashboard stats:", err);
+            }
+        };
+
+        fetchStats();
+    }, []);
+
     return (
         <div className="flex h-screen w-full bg-[#161719] overflow-hidden font-sans">
             <Sidebar />
-            <main className="flex-1 bg-[#f4f4f5] rounded-tl-[2rem] rounded-bl-[2rem] p-6 md:px-8 flex flex-col h-screen overflow-y-auto shadow-2xl border-l border-white/5">
+            <main className="flex-1 bg-[#f4f4f5] dark:bg-black rounded-tl-[2rem] rounded-bl-[2rem] p-6 md:px-8 flex flex-col h-screen overflow-y-auto shadow-2xl border-l border-white/5 transition-colors">
                 <div className="flex flex-col gap-5 max-w-[1400px] w-full mx-auto">
 
                     {/* Header Row */}
                     <div className="flex justify-between items-center w-full gap-4 shrink-0">
                         <div className="flex flex-col pt-1 min-w-0">
-                            <h1 className="text-2xl font-bold text-zinc-900 tracking-tight">Hello {userName || "User"},</h1>
+                            <h1 className="text-2xl font-bold text-zinc-900 dark:text-white tracking-tight">Hello {userName || "User"},</h1>
                             <div className="flex items-center gap-4 mt-1.5 border-b border-transparent">
-                                <p className="text-base font-semibold text-zinc-500">Council: <span className="font-bold text-zinc-800 ml-1">Tech Council</span></p>
-                                <div className="flex items-center gap-1 cursor-pointer group hover:bg-zinc-200/50 px-2 py-0.5 rounded-md transition-colors -ml-2">
-                                    <p className="text-base font-semibold text-zinc-500">College: <span className="font-bold text-zinc-800 ml-1">Engineering Inst.</span></p>
-                                    <ChevronDown className="w-3.5 h-3.5 text-zinc-400 group-hover:text-zinc-700 transition-colors ml-0.5" />
+                                <p className="text-base font-semibold text-zinc-500 dark:text-zinc-400">Council: <span className="font-bold text-zinc-800 dark:text-zinc-200 ml-1">{userData.councilname || "—"}</span></p>
+                                <div className="flex items-center gap-1 cursor-pointer group hover:bg-zinc-200/50 dark:hover:bg-zinc-800/50 px-2 py-0.5 rounded-md transition-colors -ml-2">
+                                    <p className="text-base font-semibold text-zinc-500 dark:text-zinc-400">Role: <span className="font-bold text-zinc-800 dark:text-zinc-200 ml-1">{userData.role || "user"}</span></p>
                                 </div>
                             </div>
                         </div>
@@ -76,17 +108,18 @@ export default function Dashboard() {
                                 <input
                                     type="text"
                                     placeholder="Search..."
-                                    className="pl-10 pr-5 py-2.5 w-72 rounded-full border border-zinc-200/80 outline-none focus:ring-2 focus:ring-[#c79c5e]/20 bg-white shadow-sm text-sm text-zinc-800 placeholder-zinc-400 transition-all font-medium"
+                                    className="pl-10 pr-5 py-2.5 w-72 rounded-full border border-zinc-200/80 dark:border-zinc-800 outline-none focus:ring-2 focus:ring-[#c79c5e]/20 bg-white dark:bg-[#111] shadow-sm text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 transition-all font-medium"
                                 />
                             </div>
 
                             {/* Profile Button */}
-                            <button className="flex items-center gap-3 bg-white border border-zinc-200/80 hover:border-zinc-300 hover:bg-zinc-50 transition-all text-zinc-800 px-5 py-2 rounded-full font-semibold text-base shadow-sm group">
+                            <button className="flex items-center gap-3 bg-white dark:bg-[#111] border border-zinc-200/80 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all text-zinc-800 dark:text-zinc-200 px-5 py-2 rounded-full font-semibold text-base shadow-sm group">
                                 <span className="hidden sm:inline text-base">{userName || "User"}</span>
-                                <div className="bg-zinc-100 rounded-full p-1 group-hover:bg-zinc-200 transition-colors">
-                                    <User className="w-5 h-5 text-zinc-600" />
+                                <div className="bg-zinc-100 dark:bg-zinc-800 rounded-full p-1 group-hover:bg-zinc-200 dark:group-hover:bg-zinc-700 transition-colors">
+                                    <User className="w-5 h-5 text-zinc-600 dark:text-zinc-300" />
                                 </div>
                             </button>
+                            <ThemeToggle />
                         </div>
                     </div>
 
@@ -98,18 +131,33 @@ export default function Dashboard() {
 
                             {/* Row 1: 3 Stat Cards */}
                             <div className="grid grid-cols-3 gap-5">
-                                <StatCard title="Total Sponsorship Secured" amount="54,812" trend="up" trendValue="+2.5" />
-                                <StatCard title="Pending Sponsorship" amount="36,254" trend="down" trendValue="-3.5" />
-                                <StatCard title="Total Revenue" amount="126,348" trend="up" trendValue="+4.5" />
+                                <StatCard
+                                    title="Total Sponsorship Secured"
+                                    amount={stats.totalSecured != null ? stats.totalSecured.toLocaleString() : "—"}
+                                    trend="up"
+                                    trendValue="+2.5"
+                                />
+                                <StatCard
+                                    title="Pending Sponsorship"
+                                    amount={stats.pending != null ? stats.pending.toLocaleString() : "—"}
+                                    trend="down"
+                                    trendValue="-3.5"
+                                />
+                                <StatCard
+                                    title="Total Revenue"
+                                    amount={stats.revenue != null ? stats.revenue.toLocaleString() : "—"}
+                                    trend="up"
+                                    trendValue="+4.5"
+                                />
                             </div>
 
                             {/* Row 2: Revenue Flow & Event Sponsors */}
                             <div className="flex flex-row gap-5 h-[340px]">
                                 <div className="flex-[2] h-full min-w-0">
-                                    <RevenueFlowCard />
+                                    <RevenueFlowCard revenueFlow={stats.revenueFlow} />
                                 </div>
                                 <div className="flex-[1] h-full min-w-0">
-                                    <EventSponsorsCard />
+                                    <EventSponsorsCard eventSponsors={stats.eventSponsors} />
                                 </div>
                             </div>
 
@@ -126,7 +174,7 @@ export default function Dashboard() {
                                 <RecentActivityCard />
                             </div>
                             <div className="shrink-0">
-                                <PipelineCard />
+                                <PipelineCard pipelineStats={stats.pipelineStats} />
                             </div>
                         </div>
 
@@ -142,22 +190,22 @@ export default function Dashboard() {
                         ></div>
 
                         {/* Modal */}
-                        <div className="relative bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl z-10">
-                            <h2 className="text-lg font-bold text-zinc-900 mb-4">
+                        <div className="relative bg-white dark:bg-[#111] rounded-2xl p-6 w-full max-w-md shadow-2xl z-10 border border-zinc-200 dark:border-zinc-800">
+                            <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 mb-4">
                                 Add Sponsor
                             </h2>
 
                             <div className="flex flex-col gap-4">
-                                <input className={inputClass} placeholder="Name" />
-                                <input className={inputClass} placeholder="Phone Number" />
-                                <input className={inputClass} placeholder="Category" />
-                                <input className={inputClass} placeholder="Status" />
+                                <input className={`${inputClass} dark:bg-zinc-900 dark:border-zinc-800 dark:text-white`} placeholder="Name" />
+                                <input className={`${inputClass} dark:bg-zinc-900 dark:border-zinc-800 dark:text-white`} placeholder="Phone Number" />
+                                <input className={`${inputClass} dark:bg-zinc-900 dark:border-zinc-800 dark:text-white`} placeholder="Category" />
+                                <input className={`${inputClass} dark:bg-zinc-900 dark:border-zinc-800 dark:text-white`} placeholder="Status" />
 
                                 {/* Contribution Type */}
                                 <select
                                     value={contributionType}
                                     onChange={(e) => setContributionType(e.target.value)}
-                                    className={inputClass}
+                                    className={`${inputClass} dark:bg-zinc-900 dark:border-zinc-800 dark:text-white`}
                                 >
                                     <option value="">Contribution Type</option>
                                     <option value="money">Money</option>
@@ -166,8 +214,8 @@ export default function Dashboard() {
 
                                 {contributionType === "money" && (
                                     <>
-                                        <input className={inputClass} placeholder="Amount" />
-                                        <input className={inputClass} placeholder="Deliverables" />
+                                        <input className={`${inputClass} dark:bg-zinc-900 dark:border-zinc-800 dark:text-white`} placeholder="Amount" />
+                                        <input className={`${inputClass} dark:bg-zinc-900 dark:border-zinc-800 dark:text-white`} placeholder="Deliverables" />
                                     </>
                                 )}
                             </div>
@@ -175,7 +223,7 @@ export default function Dashboard() {
                             <div className="flex justify-end gap-3 mt-6">
                                 <button
                                     onClick={() => setShowModal(false)}
-                                    className="px-4 py-2 rounded-lg bg-zinc-100 text-zinc-700"
+                                    className="px-4 py-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
                                 >
                                     Cancel
                                 </button>
