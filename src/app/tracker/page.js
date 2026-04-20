@@ -3,8 +3,19 @@
 import { useEffect, useState } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { supabase } from "@/lib/supabase";
 
-export default function TrackerPage() {
+export default function TrackerPage() 
+{  
+  const getAuthHeaders = async () => {
+  const session = await supabase.auth.getSession();
+  const token = session.data.session?.access_token;
+
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  };
+};
   const [data, setData] = useState([]);
   const [sponsors, setSponsors] = useState([]);
   const [events, setEvents] = useState([]);
@@ -18,21 +29,29 @@ export default function TrackerPage() {
   const [showForm, setShowForm] = useState(false);
 
   const [newEntry, setNewEntry] = useState({
-    sponsorid: "",
-    contactmode: "Email",
-    status: "Cold",
-    notes: "",
-    eventid: "",
-    memberid: "",
-    deal_type: "Monetary",
-    deal_value: "",
-  });
+  sponsorid: "",
+  contactmode: "Email",
+  status: "Cold",
+  notes: "",
+  eventid: null,
+  memberid: null,
+  deal_type: "Monetary",
+  deal_value: null,
+});
 
   // Fetch outreach data from the outreach_view
+  
   const fetchData = async () => {
     try {
-      const res = await fetch("http://localhost:5001/outreach");
+      const headers = await getAuthHeaders();
+
+      const res = await fetch("http://localhost:5001/outreach", {
+      headers,
+      cache: "no-store",
+      });
+      
       const result = await res.json();
+      console.log("FETCHED OUTREACH:", result);
 
       if (Array.isArray(result)) {
         setData(result);
@@ -51,7 +70,10 @@ export default function TrackerPage() {
 
   const fetchSponsors = async () => {
     try {
-      const res = await fetch("http://localhost:5001/sponsors");
+      const headers = await getAuthHeaders();
+
+      const res = await fetch("http://localhost:5001/sponsors", { headers });
+      
       const result = await res.json();
 
       if (Array.isArray(result)) {
@@ -67,7 +89,10 @@ export default function TrackerPage() {
 
   const fetchEvents = async () => {
     try {
-      const res = await fetch("http://localhost:5001/events");
+      const headers = await getAuthHeaders();
+
+      const res = await fetch("http://localhost:5001/events", { headers });
+      
       const result = await res.json();
       setEvents(Array.isArray(result) ? result : []);
     } catch (err) {
@@ -78,7 +103,10 @@ export default function TrackerPage() {
 
   const fetchMembers = async () => {
     try {
-      const res = await fetch("http://localhost:5001/teammembers");
+      const headers = await getAuthHeaders();
+
+      const res = await fetch("http://localhost:5001/teammembers", { headers });
+      
       const result = await res.json();
       setMembers(Array.isArray(result) ? result : []);
     } catch (err) {
@@ -96,39 +124,65 @@ export default function TrackerPage() {
 
   // ADD
   const addOutreach = async () => {
-    console.log("ADD CLICKED", newEntry);
-    if (!newEntry.sponsorid) {
-      alert("Select sponsor");
-      return;
-    }
+  console.log("ADD CLICKED", newEntry);
 
-    await fetch("http://localhost:5001/outreach", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(newEntry),
-    });
+  if (!newEntry.sponsorid) {
+    alert("Select sponsor");
+    return;
+  }
 
-    setShowForm(false);
-    setNewEntry({
-      sponsorid: "",
-      contactmode: "Email",
-      status: "Cold",
-      notes: "",
-      eventid: "",
-      memberid: "",
-      deal_type: "Monetary",
-      deal_value: "",
-    });
-    fetchData();
-  };
+  const headers = await getAuthHeaders();
+
+  const cleanedEntry = {
+  sponsorid: Number(newEntry.sponsorid),
+  contactmode: newEntry.contactmode,
+  status: newEntry.status,
+  notes: newEntry.notes || "",
+  memberid: newEntry.memberid ?? null,
+  eventid: newEntry.eventid ?? null,
+  deal_type: newEntry.deal_type,
+  deal_value: newEntry.deal_value ?? null,
+};
+
+  console.log("SENDING:", cleanedEntry);
+
+  const res = await fetch("http://localhost:5001/outreach", {
+    method: "POST",
+    headers,
+    body: JSON.stringify(cleanedEntry),
+  });
+
+  const result = await res.json();
+  console.log("RESPONSE:", result);
+
+  if (!res.ok) {
+    alert("Insert failed");
+    return;
+  }
+
+  setShowForm(false);
+
+  setNewEntry({
+    sponsorid: "",
+    contactmode: "Email",
+    status: "Cold",
+    notes: "",
+    eventid: "",
+    memberid: "",
+    deal_type: "Monetary",
+    deal_value: null,
+  });
+
+  await fetchData();
+};
 
   // UPDATE
   const updateRow = async (id, status, notes) => {
+    const headers = await getAuthHeaders();
+
     await fetch("http://localhost:5001/outreach", {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify({ outreachid: id, status, notes }),
     });
 
@@ -137,9 +191,11 @@ export default function TrackerPage() {
 
   // DELETE
   const deleteRow = async (id) => {
+    const headers = await getAuthHeaders();
+
     await fetch("http://localhost:5001/outreach", {
       method: "DELETE",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify({ outreachid: id }),
     });
 
@@ -148,19 +204,21 @@ export default function TrackerPage() {
 
   // Filter logic
   const filteredData = data.filter((row) => {
-    const searchMatch = row.companyname
-      ?.toLowerCase()
-      .includes(search.toLowerCase());
+  const company = row.companyname || "";
 
-    const statusMatch =
-      statusFilter === "All" ||
-      (row.status && row.status.toLowerCase() === statusFilter.toLowerCase());
+  const searchMatch = company
+    .toLowerCase()
+    .includes(search.toLowerCase());
 
-    const categoryMatch =
-      categoryFilter === "All" || row.categoryname === categoryFilter;
+  const statusMatch =
+    statusFilter === "All" ||
+    (row.status && row.status.toLowerCase() === statusFilter.toLowerCase());
 
-    return searchMatch && statusMatch && categoryMatch;
-  });
+  const categoryMatch =
+    categoryFilter === "All" || row.categoryname === categoryFilter;
+
+  return searchMatch && statusMatch && categoryMatch;
+});
 
   return (
     <div className="flex h-screen bg-[#161719]">
@@ -253,7 +311,7 @@ export default function TrackerPage() {
 
             <select
               onChange={(e) =>
-                setNewEntry({ ...newEntry, memberid: Number(e.target.value) })
+                setNewEntry({ ...newEntry,memberid: e.target.value === "" ? null : Number(e.target.value) })
               }
               className="border border-zinc-200 dark:border-zinc-800 bg-transparent text-zinc-900 dark:text-white p-2 rounded-lg text-sm"
             >
@@ -267,7 +325,7 @@ export default function TrackerPage() {
 
             <select
               onChange={(e) =>
-                setNewEntry({ ...newEntry, eventid: Number(e.target.value) })
+                setNewEntry({ ...newEntry, eventid: e.target.value === "" ? null : Number(e.target.value) })
               }
               className="border border-zinc-200 dark:border-zinc-800 bg-transparent text-zinc-900 dark:text-white p-2 rounded-lg text-sm"
             >
@@ -304,7 +362,7 @@ export default function TrackerPage() {
               placeholder="Deal Value"
               type="number"
               onChange={(e) =>
-                setNewEntry({ ...newEntry, deal_value: Number(e.target.value) })
+                setNewEntry({...newEntry, deal_value: e.target.value === "" ? null : Number(e.target.value),})
               }
               className="border border-zinc-200 dark:border-zinc-800 bg-transparent text-zinc-900 dark:text-white p-2 rounded-lg text-sm w-32"
             />
