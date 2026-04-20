@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Silk from "@/components/Silk"
 import { motion } from "framer-motion";
 import { supabase } from "@/lib/supabase";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 // Inline SVGs for social buttons
 const GoogleIcon = () => (
@@ -23,8 +24,6 @@ const AppleIcon = () => (
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
-    const [username, setUsername] = useState("");
-    const [councilId, setCouncilId] = useState("");
 
     // Supabase Placeholder Triggers
     const handleGoogleLogin = async () => {
@@ -49,11 +48,7 @@ export default function LoginPage() {
         const { error } = await supabase.auth.signInWithOtp({
             email,
             options: {
-            emailRedirectTo: "http://localhost:3000/dashboard",
-            data: {
-                username: username,
-                councilid: councilId,
-            },
+                emailRedirectTo: "http://localhost:3000/dashboard",
             },
         });
 
@@ -62,6 +57,7 @@ export default function LoginPage() {
             alert(error.message);
         } else {
             alert("Magic link sent! Check your email.");
+            window.location.href = "https://www.gmail.com";
         }
     };
 
@@ -72,7 +68,10 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="flex h-screen w-full overflow-hidden font-sans bg-[#161719]">
+        <div className="flex h-screen w-full overflow-hidden font-sans bg-[#161719] relative">
+            <div className="absolute top-6 right-6 z-50">
+                <ThemeToggle />
+            </div>
             <div className="absolute inset-0 z-0 pointer-events-none">
                 <Silk
                     speed={5}
@@ -84,7 +83,7 @@ export default function LoginPage() {
             </div>
 
             {/* Left Pane - Login Card centered */}
-            <div className="flex-1 flex items-center justify-center p-6 relative z-10 w-full h-full">
+            <div className="flex-1 flex items-center justify-center p-15 relative z-10 w-full h-full">
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -92,25 +91,13 @@ export default function LoginPage() {
                     className="bg-white dark:bg-black rounded-3xl p-8 sm:p-10 w-full max-w-sm shadow-2xl relative overflow-hidden ring-1 ring-black/5 dark:ring-white/10"
                     style={{ minHeight: '480px' }}
                 >
-                    <div className="flex flex-col h-full">
+                    <div className="flex flex-col justify-center">
                         <div className="text-center mb-8">
                             <h1 className="text-xl font-bold text-zinc-900 dark:text-white">Sign up to SponsorTrack</h1>
                             <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1.5">Enter your details to get started</p>
                         </div>
 
-                        <form onSubmit={handleMagicLink} className="flex flex-col gap-5 h-full pt-1">
-                            <div className="flex flex-col gap-1.5">
-                                <label className="text-xs font-bold text-zinc-900 dark:text-zinc-300">Username</label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={username}
-                                    onChange={(e) => setUsername(e.target.value)}
-                                    className="w-full border border-zinc-200 dark:border-zinc-800 bg-transparent rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#c79c5e]/30 focus:border-[#c79c5e] text-sm text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-600 transition-all font-medium"
-                                    placeholder="Your name or organization"
-                                />
-                            </div>
-
+                        <form onSubmit={handleMagicLink} className="flex flex-col gap-5 pt-1">
                             <div className="flex flex-col gap-1.5">
                                 <label className="text-xs font-bold text-zinc-900 dark:text-zinc-300">Email Address</label>
                                 <input
@@ -123,24 +110,7 @@ export default function LoginPage() {
                                 />
                             </div>
 
-                            <div className="flex flex-col gap-1.5">
-                                <label className="text-xs font-bold text-zinc-900 dark:text-zinc-300">Council</label>
-                                <select
-                                    required
-                                    value={councilId}
-                                    onChange={(e) => setCouncilId(e.target.value)}
-                                    className="w-full border border-zinc-200 dark:border-zinc-800 bg-transparent rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#c79c5e]/30 focus:border-[#c79c5e] text-sm text-zinc-900 dark:text-white transition-all font-medium appearance-none"
-                                >
-                                    <option className="dark:bg-[#111]" value="">Select your council</option>
-                                    <option className="dark:bg-[#111]" value="1">CodeCell</option>
-                                    <option className="dark:bg-[#111]" value="2">CSI</option>
-                                    <option className="dark:bg-[#111]" value="3">BloomBox</option>
-                                    <option className="dark:bg-[#111]" value="4">Student Council</option>
-                                    <option className="dark:bg-[#111]" value="5">Mega Project</option>
-                                </select>
-                            </div>
-
-                            <div className="mt-4">
+                            <div className="mt-2">
                                 <button type="submit" className="w-full bg-[#c79c5e] hover:bg-[#b58c53] text-white font-bold rounded-xl py-3 shadow-[0_4px_14px_0_rgba(199,156,94,0.3)] transition-all text-sm">
                                     Send Magic Link
                                 </button>
@@ -154,10 +124,6 @@ export default function LoginPage() {
                         </div>
 
                         <div className="flex flex-col items-center gap-4">
-                            <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
-                                Already a user?
-                            </p>
-
                             <button onClick={handleGoogleLogin} type="button" className="flex items-center justify-center gap-3 w-full border border-zinc-200 dark:border-zinc-800 rounded-xl py-2.5 text-sm font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
                                 <GoogleIcon />
                                 Continue with Google

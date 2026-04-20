@@ -59,9 +59,9 @@ export default function FeedbackPage() {
           color="#C69B56"
           noiseIntensity={1.5}
           rotation={0}
-        />
+            />
             <Sidebar />
-            <main className="flex-1 bg-[#f4f4f5] dark:bg-black rounded-tl-[2rem] rounded-bl-[2rem] p-8 md:px-10 flex flex-col h-screen shadow-2xl border-l border-white/5 overflow-y-auto w-full transition-colors relative">
+            <main className="flex-1 rounded-tl-[2rem] rounded-bl-[2rem] p-8 md:px-10 flex flex-col h-screen shadow-2xl border-l border-white/5 overflow-y-auto w-full transition-colors relative">
                 <div className="absolute top-8 right-10">
                     <ThemeToggle />
                 </div>

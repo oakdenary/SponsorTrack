@@ -2,11 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-import { ChevronDown } from 'lucide-react';
 
 const COLORS = ['#10b981', '#3b82f6', '#f43f5e', '#d19d5a', '#8b5cf6', '#f97316', '#06b6d4', '#ec4899'];
 
-export function EventSponsorsCard({ eventSponsors }) {
+export function EventSponsorsCard({ sponsorCategories }) {
     const [isCompact, setIsCompact] = useState(false);
 
     useEffect(() => {
@@ -17,9 +16,9 @@ export function EventSponsorsCard({ eventSponsors }) {
     }, []);
 
     // Transform API data into chart data
-    const data = (eventSponsors || []).map((es, idx) => ({
-        name: es.eventname,
-        value: es.total,
+    const data = (sponsorCategories || []).map((sc, idx) => ({
+        name: sc.categoryname,
+        value: sc.total,
         color: COLORS[idx % COLORS.length],
     }));
 
@@ -30,14 +29,14 @@ export function EventSponsorsCard({ eventSponsors }) {
         <div className="bg-white dark:bg-[#111] rounded-[1.5rem] p-5 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.1)] border border-zinc-100 dark:border-zinc-800 flex flex-col h-full w-full relative overflow-hidden transition-colors">
             <div className="flex justify-between items-center mb-3 shrink-0">
                 <div className="min-w-0">
-                    <h2 className="text-zinc-900 dark:text-zinc-100 font-bold text-base tracking-tight truncate">Event Sponsors</h2>
-                    <p className="text-[11px] text-zinc-500 dark:text-zinc-400 font-medium mt-0.5">Sponsors per event</p>
+                    <h2 className="text-zinc-900 dark:text-zinc-100 font-bold text-base tracking-tight truncate">Sponsor Categories</h2>
+                    <p className="text-[11px] text-zinc-500 dark:text-zinc-400 font-medium mt-0.5">Council demographic distribution</p>
                 </div>
             </div>
 
             {!hasData ? (
                 <div className="flex items-center justify-center flex-1">
-                    <p className="text-zinc-400 font-semibold text-sm">No event data yet</p>
+                    <p className="text-zinc-400 font-semibold text-sm">No categorical data yet</p>
                 </div>
             ) : isCompact ? (
                 /* Compact mode: no pie chart, just a clean colored list */
@@ -54,7 +53,7 @@ export function EventSponsorsCard({ eventSponsors }) {
                                     <div className="w-3 h-3 rounded-sm shrink-0" style={{ backgroundColor: item.color }}></div>
                                     <span className="text-zinc-700 dark:text-zinc-300 text-xs font-semibold truncate">{item.name}</span>
                                 </div>
-                                <span className="text-zinc-900 dark:text-zinc-100 font-bold text-xs shrink-0 ml-2">{item.value}</span>
+                                <span className="text-zinc-900 dark:text-zinc-100 font-bold text-xs shrink-0 ml-2">{pct}%</span>
                             </div>
                         );
                     })}
@@ -82,7 +81,7 @@ export function EventSponsorsCard({ eventSponsors }) {
                                 <Tooltip
                                     contentStyle={{ backgroundColor: '#161719', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '11px' }}
                                     itemStyle={{ color: '#fff', fontWeight: 'bold' }}
-                                    formatter={(val) => `${val} sponsors`}
+                                    formatter={(val) => `${val} partners`}
                                 />
                             </PieChart>
                         </ResponsiveContainer>
