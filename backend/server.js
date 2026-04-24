@@ -81,13 +81,30 @@ app.get("/outreach", async (req, res) => {
 
     councilId = Number(councilId);
 
-    const { data, error } = await supabase
+    const { data: viewData, error } = await supabase
       .schema("sponsorship")
-      .from("outreach_view")   // ✅ FIXED
+      .from("outreach_view")
       .select("*")
       .eq("councilid", councilId);
 
     if (error) return res.status(500).json({ error: error.message });
+
+    const { data: sponsorData } = await supabase
+      .schema("sponsorship")
+      .from("sponsor")
+      .select("companyname, categoryname");
+
+    const categoryMap = {};
+    (sponsorData || []).forEach(s => {
+      if (s.companyname) {
+        categoryMap[s.companyname] = s.categoryname;
+      }
+    });
+
+    const data = (viewData || []).map(row => ({
+      ...row,
+      categoryname: categoryMap[row.companyname] || row.categoryname || "Uncategorized"
+    }));
 
     res.json(data);
   } catch (err) {
@@ -140,14 +157,14 @@ app.post("/outreach", async (req, res) => {
 
     // 👤 STEP 5: Decide memberid
     const memberid =
-    inputMemberId && inputMemberId !== "null"
-    ? Number(inputMemberId)
-    : null;
+      inputMemberId && inputMemberId !== "null"
+        ? Number(inputMemberId)
+        : null;
 
     const parsedEventId =
-    eventid && eventid !== "null"
-    ? Number(eventid)
-    : null;
+      eventid && eventid !== "null"
+        ? Number(eventid)
+        : null;
 
     // 🚫 STEP 6: Prevent duplicate outreach (same sponsor + council)
     const { data: existing } = await supabase
@@ -321,7 +338,7 @@ app.get("/sponsors", async (req, res) => {
         designation,
         phoneno,
         email,
-        sponsorcategory (categoryname)
+        sponsorcategory:categoryid (categoryname)
       `)
       .order("companyname");
 
@@ -364,7 +381,7 @@ app.post("/sponsors", async (req, res) => {
       .from("sponsor")
       .insert({
         companyname,
-        sponsorcategoryid: sponsorcategoryid ? Number(sponsorcategoryid) : null,
+        categoryid: sponsorcategoryid ? Number(sponsorcategoryid) : null,
         contactperson,
         designation,
         email,
@@ -421,10 +438,16 @@ app.get("/events", async (req, res) => {
 // GET — Fetch team members for dropdown
 app.get("/teammembers", async (req, res) => {
   try {
+    const user = await getUserFromToken(req);
+    if (!user) return res.status(401).json({ error: "Unauthorized" });
+
+    const councilId = await getUserCouncil(user.id);
+
     const { data, error } = await supabase
       .schema("sponsorship")
       .from("teammember")
       .select("memberid, membername")
+      .eq("councilid", councilId)
       .order("membername");
 
     if (error) return res.status(500).json({ error: error.message });
@@ -487,61 +510,66 @@ app.get("/dashboard", async (req, res) => {
     if (!councilId) {
       return res.status(400).json({ error: "User council not found" });
     }
-    
-    // We also need the user's mapping to 'memberid' or we can just calculate if there is a matching outreach 
-    // where they logged it? The UI sends user ID. Let's see if we can find memberid by matching teammember name 
-    // or if we should just return all data for now and let the frontend figure it out, or query outreach where memberid corresponds to them.
-    // Wait, the easiest way to identify the user's outreach is if we fetch ALL council outreach and frontend checks member.
-    // Let's compute 'my_contribution' natively. Wait, the username might not exactly match member name in `teammember`.
-    // Actually, `user` table has `username`. Let's match membername = username inside council.
-    const { data: memberData } = await supabase
+
+    // We need the user's explicit memberid mapped from `users` table directly
+    const { data: userData } = await supabase
       .schema("sponsorship")
-      .from("teammember")
+      .from("users")
       .select("memberid")
-      .eq("membername", user.user_metadata?.username || user.email?.split('@')[0]) // fallback
-      .eq("councilid", councilId)
-      .limit(1);
-      
-    // Better: let's fetch ALL outreach for the council, and the frontend can find contribution by matching ID or name!
-    // But we can also compute the overall revenue and things here for that council.
+      .eq("id", user.id)
+      .single();
 
-    // Fetch the council's events
-    const { data: events } = await supabase
+    const myMemberId = userData?.memberid;
+
+    // Dynamic extraction of ALL dashboard stats directly from native tables (matching the Tracker fixes)
+    const { data: rawData, error } = await supabase
       .schema("sponsorship")
-      .from("event")
-      .select("eventid")
+      .from("outreach")
+      .select(`
+        *,
+        sponsor ( companyname, categoryid, sponsorcategory ( categoryname ) )
+      `)
       .eq("councilid", councilId);
-    
-    const eventIds = (events || []).map(e => e.eventid);
 
-    // 1. Total Sponsorship Secured & Pending (for this council's events)
-    const { data: sponsorshipsRaw } = await supabase
-      .schema("sponsorship")
-      .from("sponsorship")
-      .select("sponsorshipid, status, sponsorid")
-      .in("eventid", eventIds.length ? eventIds : [-1]); // pass -1 if empty so it doesn't error
+    if (error) {
+      console.error("Dashboard API Error:", error.message);
+      return res.status(500).json({ error: error.message });
+    }
 
-    const totalSecured = sponsorshipsRaw?.filter(s => s.status === "Confirmed").length || 0;
-    const pending = sponsorshipsRaw?.filter(s => s.status === "Pending").length || 0;
-    const sponsorshipIds = sponsorshipsRaw?.map(s => s.sponsorshipid) || [];
+    const pipelineWithCategories = (rawData || []).map(row => ({
+      ...row,
+      companyname: row.sponsor?.companyname || "Unknown Company",
+      categoryname: row.sponsor?.sponsorcategory?.categoryname || "Uncategorized"
+    }));
 
-    // 3. Total Revenue & Revenue Flow (From payments corresponding to those sponsorships)
-    const { data: revenueData } = await supabase
-      .schema("sponsorship")
-      .from("payment")
-      .select("amountpaid, paymentdate")
-      .in("sponsorshipid", sponsorshipIds.length ? sponsorshipIds : [-1]);
+    const myDeals = pipelineWithCategories.filter(
+      o =>
+        o.memberid === myMemberId &&
+        (o.status || "").toLowerCase().trim() === "closed"
+    );
 
-    const revenue = (revenueData || []).reduce(
-      (sum, p) => sum + (parseFloat(p.amountpaid) || 0),
+    const myTotalValue = myDeals.reduce(
+      (sum, o) => sum + (Number(o.deal_value) || 0),
       0
     );
 
+    const councilDeals = pipelineWithCategories.filter(
+      o => (o.status || "").toLowerCase().trim() === "closed"
+    );
+
+    const councilRevenue = councilDeals.reduce(
+      (sum, o) => sum + (Number(o.deal_value) || 0),
+      0
+    );
+
+    // 1. Revenue Flow based directly on outreach dates
+    // Using created_at if present. If missing, groups to today's date.
     const revenueFlowMap = {};
-    (revenueData || []).forEach((p) => {
-      const date = p.paymentdate?.split("T")[0] || p.paymentdate;
+    councilDeals.forEach(o => {
+      const dateObj = o.created_at ? new Date(o.created_at) : new Date();
+      const date = dateObj.toISOString().split("T")[0];
       if (!revenueFlowMap[date]) revenueFlowMap[date] = 0;
-      revenueFlowMap[date] += parseFloat(p.amountpaid) || 0;
+      revenueFlowMap[date] += (Number(o.deal_value) || 0);
     });
 
     const revenueFlow = Object.entries(revenueFlowMap).map(([date, amount]) => ({
@@ -549,55 +577,51 @@ app.get("/dashboard", async (req, res) => {
       amount,
     })).sort((a,b) => new Date(a.date) - new Date(b.date));
 
-    // 5. Categorical Breakdown (Replacing Event Sponsors)
-    // Find the category of each sponsor associated with our confirmed/pending sponsorships
-    const securedSponsorIds = sponsorshipsRaw?.map(s => s.sponsorid) || [];
-    const { data: sponsorCategoryRaw } = await supabase
-      .schema("sponsorship")
-      .from("sponsor")
-      .select("sponsorid, sponsorcategory(categoryname)")
-      .in("sponsorid", securedSponsorIds.length ? securedSponsorIds : [-1]);
-
+    // 2. Company Categories for Pie Chart
     const categoryMap = {};
-    (sponsorCategoryRaw || []).forEach(s => {
-      const catName = s.sponsorcategory?.categoryname || "Uncategorized";
+    pipelineWithCategories.filter(o => {
+      const s = (o.status || "").toLowerCase().trim();
+      return s === "closed" || s === "confirmed";
+    }).forEach(o => {
+      const catName = o.categoryname;
       if (!categoryMap[catName]) categoryMap[catName] = 0;
       categoryMap[catName]++;
     });
 
-    const sponsorCategories = Object.entries(categoryMap).map(([name, total]) => ({
-      categoryname: name,
-      total,
+    const pieData = Object.entries(categoryMap).map(([label, value]) => ({
+      label,
+      value
     }));
 
-    // 6. Pipeline Stats (outreach count by status for this council)
-    const { data: pipelineRaw } = await supabase
-      .schema("sponsorship")
-      .from("outreach_view")
-      .select("status, deal_value, memberid")
-      .eq("councilid", councilId);
-
-    const pipelineMap = {};
-    (pipelineRaw || []).forEach((o) => {
-      const s = o.status || "Unknown";
-      if (!pipelineMap[s]) pipelineMap[s] = 0;
-      pipelineMap[s]++;
+    // 3. Pipeline Stats for PipelineCard
+    const statusMap = {};
+    pipelineWithCategories.forEach(o => {
+      const s = (o.status || "Unknown").trim();
+      if (!statusMap[s]) statusMap[s] = 0;
+      statusMap[s]++;
     });
 
-    const pipelineStats = Object.entries(pipelineMap).map(([label, count]) => ({
+    const pipelineStats = Object.entries(statusMap).map(([label, count]) => ({
       label,
-      count,
+      count
     }));
 
-    // Send the raw pipeline text to frontend so it can filter my_contribution perfectly!
+    // OPTIONAL DEBUG
+    console.log("TOTAL ROWS:", pipelineWithCategories.length);
+    console.log("CLOSED DEALS:", councilDeals.length);
+    console.log("STATUSES:", pipelineWithCategories.map(o => o.status));
+
     res.json({
-      totalSecured,
-      pending,
-      revenue,
-      revenueFlow,
-      sponsorCategories, // Send categorical breakdown instead of events
+      totalDeals: councilDeals.length,
+      totalRevenue: councilRevenue,
+      pieData,
       pipelineStats,
-      councilOutreach: pipelineRaw || [], // For `my_contribution` calculation
+      revenueFlow, 
+      myContribution: {
+        totalDeals: myDeals.length,
+        totalValue: myTotalValue
+      },
+      councilOutreach: pipelineWithCategories
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -614,12 +638,12 @@ app.get("/admin/dashboard", async (req, res) => {
     if (!adminUser) return res.status(403).json({ error: "Forbidden: Admins only" });
 
     const [
-      { data: users }, 
-      { data: councils }, 
-      { data: sponsors }, 
-      { data: outreach }, 
-      { data: payments }, 
-      { data: sponsorships }, 
+      { data: users },
+      { data: councils },
+      { data: sponsors },
+      { data: outreach },
+      { data: payments },
+      { data: sponsorships },
       { data: teammembers },
       { data: feedback }
     ] = await Promise.all([
@@ -746,7 +770,7 @@ app.post("/user/profile", async (req, res) => {
     }
 
     if (id !== user.id) {
-       return res.status(403).json({ error: "ID mismatch" });
+      return res.status(403).json({ error: "ID mismatch" });
     }
 
     let finalCouncilId = Number(councilid);
@@ -805,7 +829,7 @@ app.put("/user/profile/update", async (req, res) => {
     const { id, username, role, adminPassword } = req.body;
 
     if (id !== user.id) {
-       return res.status(403).json({ error: "ID mismatch" });
+      return res.status(403).json({ error: "ID mismatch" });
     }
 
     let finalRole = role;

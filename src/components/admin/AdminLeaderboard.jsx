@@ -2,14 +2,14 @@ import React, { useMemo } from 'react';
 import { Trophy, Award, ChevronRight, Building } from 'lucide-react';
 
 export default function AdminLeaderboard({ data: filteredData, rawData }) {
-    
+
     // Use rawData to evaluate global council performance
     const councils = rawData?.councils || [];
 
     const leaderboard = useMemo(() => {
         const councilData = {};
         councils.forEach(c => councilData[c.councilid] = { name: c.councilname, rev: 0, closed: 0, total: 0 });
-        
+
         (rawData?.outreach || []).forEach(o => {
             const cid = o.councilid;
             if (councilData[cid]) {
@@ -19,15 +19,15 @@ export default function AdminLeaderboard({ data: filteredData, rawData }) {
                 }
             }
         });
-        
+
         (rawData?.payments || []).forEach(p => {
             const s = (rawData?.sponsorships || []).find(s => s.sponsorshipid === p.sponsorshipid);
             if (s && s.event && s.event.councilid && councilData[s.event.councilid]) {
                 councilData[s.event.councilid].rev += Number(p.amountpaid || 0);
             }
         });
-        
-        return Object.values(councilData).sort((a,b) => b.rev - a.rev);
+
+        return Object.values(councilData).sort((a, b) => b.rev - a.rev);
     }, [rawData, councils]);
 
     return (
@@ -37,7 +37,7 @@ export default function AdminLeaderboard({ data: filteredData, rawData }) {
                 <div className="absolute top-0 right-0 p-8 opacity-5 dark:opacity-10 text-zinc-900 dark:text-white pointer-events-none">
                     <Trophy className="w-[400px] h-[400px] absolute -right-20 -top-20" />
                 </div>
-                
+
                 <div className="flex items-center gap-4 mb-8 relative z-10">
                     <div className="bg-[#c79c5e]/10 dark:bg-[#c79c5e]/20 p-4 rounded-2xl border border-[#c79c5e]/20 dark:border-[#c79c5e]/30">
                         <Building className="w-8 h-8 text-[#c79c5e]" />
@@ -67,8 +67,8 @@ export default function AdminLeaderboard({ data: filteredData, rawData }) {
                                 </div>
                             </div>
                             <div className="w-48 bg-zinc-100 dark:bg-zinc-800 rounded-full h-2 hidden md:block overflow-hidden shrink-0 mt-1">
-                                <div 
-                                    className="bg-[#c79c5e] h-full rounded-full transition-all duration-1000 ease-out" 
+                                <div
+                                    className="bg-[#c79c5e] h-full rounded-full transition-all duration-1000 ease-out"
                                     style={{ width: `${Math.min(100, Math.max(2, (council.rev / Math.max(1, leaderboard[0]?.rev)) * 100))}%` }}
                                 />
                             </div>

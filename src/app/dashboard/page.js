@@ -15,63 +15,100 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import ProfileCompletionModal from "@/components/ProfileCompletionModal";
 
 const inputClass =
-  "w-full border border-zinc-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#c79c5e]/30";
+    "w-full border border-zinc-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#c79c5e]/30";
 
 export default function Dashboard() {
-        const router = useRouter();
-        const [userName, setUserName] = useState("");
-        const [userData, setUserData] = useState({});
-        const [stats, setStats] = useState({});
-        const [showModal, setShowModal] = useState(false);
-        const [contributionType, setContributionType] = useState("");
-        
-        const [authUser, setAuthUser] = useState(null);
-        const [needsOnboarding, setNeedsOnboarding] = useState(false);
+    const router = useRouter();
+    const [userName, setUserName] = useState("");
+    const [userData, setUserData] = useState({});
+    const [stats, setStats] = useState({});
+    const [showModal, setShowModal] = useState(false);
+    const [contributionType, setContributionType] = useState("");
 
-        useEffect(() => {
-    const checkUser = async () => {
-        const { data } = await supabase.auth.getUser();
+    const [authUser, setAuthUser] = useState(null);
+    const [calendarEvents, setCalendarEvents] = useState([]);
+    const [needsOnboarding, setNeedsOnboarding] = useState(false);
 
-        if (!data.user) {
-            router.push("/login");
-        } else {
-            const user = data.user;
+    useEffect(() => {
+        const checkUser = async () => {
+            const { data } = await supabase.auth.getUser();
 
-            // Try to get username from metadata
-            let name = user.user_metadata?.username;
+            if (!data.user) {
+                router.push("/login");
+            } else {
+                const user = data.user;
 
-            // Fallback: use email before "@"
-            if (!name && user.email) {
-                name = user.email.split("@")[0];
+                // Try to get username from metadata
+                let name = user.user_metadata?.username;
+
+                // Fallback: use email before "@"
+                if (!name && user.email) {
+                    name = user.email.split("@")[0];
+                }
+
+                setUserName(name || "User");
+                setAuthUser(user);
+
+                // Fetch full user details from API
+                try {
+                    const res = await fetch(`/api/user?id=${user.id}`);
+                    const userInfo = await res.json();
+
+                    if (userInfo.role === 'admin') {
+                        router.push('/admin/dashboard');
+                        return;
+                    }
+
+                    if (userInfo.error === "User not found") {
+                        setNeedsOnboarding(true);
+                    } else if (!userInfo.error) {
+                        setUserData(userInfo);
+                        if (userInfo.username) setUserName(userInfo.username);
+                    }
+                } catch (err) {
+                    console.error("Failed to fetch user info:", err);
+                }
             }
+        };
 
-            setUserName(name || "User");
-            setAuthUser(user);
+        checkUser();
+    }, []);
 
-            // Fetch full user details from API
+    useEffect(() => {
+        const fetchGoogleCalendar = async () => {
             try {
-                const res = await fetch(`/api/user?id=${user.id}`);
-                const userInfo = await res.json();
+                const session = await supabase.auth.getSession();
+                const token = session.data.session?.provider_token;
 
-                if (userInfo.role === 'admin') {
-                    router.push('/admin/dashboard');
+                if (!token) {
+                    console.log("User not logged in with Google");
                     return;
                 }
 
-                if (userInfo.error === "User not found") {
-                    setNeedsOnboarding(true);
-                } else if (!userInfo.error) {
-                    setUserData(userInfo);
-                    if (userInfo.username) setUserName(userInfo.username);
+                const timeMin = new Date();
+                timeMin.setMonth(timeMin.getMonth() - 1);
+                const url = `https://www.googleapis.com/calendar/v3/calendars/primary/events?singleEvents=true&orderBy=startTime&maxResults=50&timeMin=${timeMin.toISOString()}`;
+                
+                const res = await fetch(url, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+
+                const data = await res.json();
+
+                if (data.items) {
+                    setCalendarEvents(data.items);
                 }
             } catch (err) {
-                console.error("Failed to fetch user info:", err);
+                console.error("Calendar fetch error:", err);
             }
-        }
-    };
+        };
 
-    checkUser();
-}, []);
+        if (authUser) {
+            fetchGoogleCalendar();
+        }
+    }, [authUser]);
 
     // Fetch dashboard stats
     useEffect(() => {
@@ -120,30 +157,7 @@ export default function Dashboard() {
         }
     };
 
-    // Calculate 'My Contribution' from councilOutreach mapping
-    const myContribution = (stats.councilOutreach || []).filter(o => 
-        (o.status === 'Closed' || o.status === 'Confirmed') && 
-        (o.memberid === userData.id || true) // We lack strong memberid link without checking username. Let's just assume we can find it.
-    );
-    // Actually, backend passes `memberid`. We don't have member list mapped, but `userData.id` is a UUID while `memberid` is an integer mapping to `teammember.memberid`.
-    // Wait, let's just calculate it. Oh, backend didn't supply exactly which user maps to which `memberid`.
-    // Wait, let's fetch members! But wait, we can just match membername. I'll do it via `/api/teammembers`.
-    // Let's do it simply by using `userData.username` mapping.
-    const [myMemberId, setMyMemberId] = useState(null);
-    useEffect(() => {
-        const getMyMemberId = async () => {
-            if (!userData.username || !userData.councilid) return;
-            const res = await fetch('/api/teammembers');
-            const members = await res.json();
-            const matched = members.find(m => m.membername === userData.username && m.councilid === userData.councilid);
-            if (matched) setMyMemberId(matched.memberid);
-        }
-        getMyMemberId();
-    }, [userData]); 
-
-    const myContributionValue = (stats.councilOutreach || [])
-        .filter(o => (o.status === "Closed" || o.status === "Confirmed") && o.memberid === myMemberId)
-        .reduce((sum, o) => sum + (Number(o.deal_value) || 0), 0);
+    // 'My Contribution' is completely handled by the backend /dashboard endpoint mapping directly natively to memberid
 
     return (
         <div className="flex h-screen w-full bg-[#161719] overflow-hidden font-sans">
@@ -198,34 +212,35 @@ export default function Dashboard() {
                         <div className="col-span-12 xl:col-span-9 flex flex-col gap-5">
 
                             {/* Row 1: 3 Stat Cards */}
-                            <div className="grid grid-cols-3 gap-5">
-                                {/* Editable Budget Card */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                                 <div className="bg-white dark:bg-[#111] border border-zinc-200/80 dark:border-zinc-800 rounded-[1.5rem] p-5 shadow-sm min-w-0 flex flex-col justify-center">
-                                    <h3 className="text-sm font-bold text-zinc-500 mb-1 tracking-wide uppercase">Upcoming Event Budget</h3>
-                                    <div className="flex items-center">
-                                        <span className="text-3xl font-extrabold text-[#c79c5e] mt-1 mr-1">₹</span>
-                                        <input 
-                                            value={requiredBudget}
-                                            onChange={handleBudgetChange}
-                                            className="text-3xl font-extrabold text-zinc-900 dark:text-zinc-100 mt-1 min-w-0 bg-transparent outline-none w-full border-b border-transparent focus:border-[#c79c5e]/30 transition-colors"
-                                        />
+                                    <h3 className="text-sm font-bold text-zinc-500 mb-1 tracking-wide uppercase">Council Revenue</h3>
+                                    <div className="text-3xl font-extrabold text-zinc-900 dark:text-zinc-100 mt-1 truncate">
+                                        ₹{stats.totalRevenue ? stats.totalRevenue.toLocaleString() : "0"}
                                     </div>
-                                    <p className="text-xs font-semibold text-zinc-400 mt-2">Editable required budget</p>
+                                    <p className="text-xs font-semibold text-zinc-400 mt-2">Total revenue in deals closed</p>
                                 </div>
 
-                                <StatCard
-                                    title="Current Obtained Budget"
-                                    amount={stats.revenue != null ? stats.revenue.toLocaleString() : "—"}
-                                    trend="up"
-                                    trendValue="+12%"
-                                />
+                                <div className="bg-white dark:bg-[#111] border border-zinc-200/80 dark:border-zinc-800 rounded-[1.5rem] p-5 shadow-sm min-w-0 flex flex-col justify-center">
+                                    <h3 className="text-sm font-bold text-zinc-500 mb-1 tracking-wide uppercase">Council Deals</h3>
+                                    <div className="text-3xl font-extrabold text-zinc-900 dark:text-zinc-100 mt-1">
+                                        {stats.totalDeals || 0}
+                                    </div>
+                                    <p className="text-xs font-semibold text-zinc-400 mt-2">Total deals closed</p>
+                                </div>
                                 
-                                <StatCard
-                                    title="My Contribution"
-                                    amount={myContributionValue.toLocaleString()}
-                                    trend={myContributionValue > 0 ? "up" : "none"}
-                                    trendValue="Personal"
-                                />
+                                <div className="bg-white dark:bg-[#111] border border-zinc-200/80 dark:border-zinc-800 rounded-[1.5rem] p-5 shadow-sm min-w-0 flex flex-col justify-center ring-1 ring-[#c79c5e]/30 dark:ring-[#c79c5e]/20 bg-gradient-to-br from-white to-[#c79c5e]/5 dark:from-[#111] dark:to-[#c79c5e]/10 relative overflow-hidden">
+                                    <div className="absolute -right-6 -top-6 w-24 h-24 bg-[#c79c5e]/10 rounded-full blur-2xl"></div>
+                                    <h3 className="text-sm font-bold text-[#c79c5e] mb-1 tracking-wide uppercase relative z-10">My Contribution</h3>
+                                    <div className="flex flex-col gap-1.5 mt-1 relative z-10">
+                                        <div className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 truncate">
+                                            ₹{stats.myContribution?.totalValue ? stats.myContribution.totalValue.toLocaleString() : "0"}
+                                        </div>
+                                        <p className="text-sm font-black text-zinc-600 dark:text-zinc-400 mt-1">
+                                            {stats.myContribution?.totalDeals || 0} Deals Closed
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
 
                             {/* Row 2: Revenue Flow & Event Sponsors (Now Sponsor Categories) */}
@@ -234,13 +249,13 @@ export default function Dashboard() {
                                     <RevenueFlowCard revenueFlow={stats.revenueFlow} />
                                 </div>
                                 <div className="flex-[1] h-full min-w-0">
-                                    <EventSponsorsCard sponsorCategories={stats.sponsorCategories} />
+                                    <EventSponsorsCard pieData={stats.pieData} />
                                 </div>
                             </div>
 
                             {/* Row 3: Horizontal Calendar */}
                             <div className="h-[240px]">
-                                <HorizontalCalendarCard />
+                                <HorizontalCalendarCard events={calendarEvents} />
                             </div>
 
                         </div>
@@ -248,7 +263,7 @@ export default function Dashboard() {
                         {/* Right Section (3 cols): Recent Activity & Pipeline */}
                         <div className="col-span-12 xl:col-span-3 flex flex-col gap-5">
                             <div className="flex-[1.5] min-h-[300px]">
-                                <RecentActivityCard />
+                                <RecentActivityCard events={calendarEvents} />
                             </div>
                             <div className="shrink-0">
                                 <PipelineCard pipelineStats={stats.pipelineStats} />
@@ -275,7 +290,7 @@ export default function Dashboard() {
                                 const formData = new FormData(e.target);
                                 const session = await supabase.auth.getSession();
                                 const token = session.data.session?.access_token;
-                                
+
                                 const payload = {
                                     companyname: formData.get("companyname"),
                                     contactperson: formData.get("contactperson"),
@@ -302,7 +317,7 @@ export default function Dashboard() {
                                 }
                             }} className="flex flex-col gap-4">
                                 <input required name="companyname" className={`${inputClass} dark:bg-zinc-900 dark:border-zinc-800 dark:text-white`} placeholder="Company Name *" />
-                                
+
                                 <select name="category" className={`${inputClass} dark:bg-zinc-900 dark:border-zinc-800 dark:text-white`}>
                                     <option value="">Select Category (Optional)</option>
                                     <option value="1">Banking</option>
@@ -315,7 +330,7 @@ export default function Dashboard() {
                                     <option value="8">Entertainment</option>
                                     <option value="9">Beauty & Personal Care</option>
                                 </select>
-                                
+
                                 <div className="grid grid-cols-2 gap-3">
                                     <input name="contactperson" className={`${inputClass} dark:bg-zinc-900 dark:border-zinc-800 dark:text-white`} placeholder="Contact Person" />
                                     <input name="designation" className={`${inputClass} dark:bg-zinc-900 dark:border-zinc-800 dark:text-white`} placeholder="Designation" />
@@ -342,18 +357,18 @@ export default function Dashboard() {
                     </div>
                 )}
             </main>
-            
+
             {/* Global Onboarding Modal Block */}
             {needsOnboarding && authUser && (
-                <ProfileCompletionModal 
-                    authUser={authUser} 
-                    email={authUser.email} 
-                    defaultName={userName} 
+                <ProfileCompletionModal
+                    authUser={authUser}
+                    email={authUser.email}
+                    defaultName={userName}
                     onComplete={(newUserData) => {
                         setUserData(newUserData);
                         setUserName(newUserData.username);
                         setNeedsOnboarding(false);
-                    }} 
+                    }}
                 />
             )}
         </div>

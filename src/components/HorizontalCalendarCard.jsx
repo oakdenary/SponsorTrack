@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { format, addDays } from 'date-fns';
 import { ChevronRight } from 'lucide-react';
 
-export function HorizontalCalendarCard() {
+export function HorizontalCalendarCard({ events = [] }) {
     const [currentDate] = useState(new Date());
     const [isCompact, setIsCompact] = useState(false);
 
@@ -16,16 +16,6 @@ export function HorizontalCalendarCard() {
     }, []);
 
     const days = Array.from({ length: 7 }).map((_, i) => addDays(currentDate, i - 1));
-
-    const dummyFollowUps = [
-        { sponsor: 'Acme Corp', event: 'Tech Summit', status: 'Negotiation', color: 'bg-blue-100 text-blue-700', dot: 'bg-blue-500' },
-        null,
-        { sponsor: 'Stark Ind.', event: 'Hackathon', status: 'Contacted', color: 'bg-yellow-100 text-yellow-700', dot: 'bg-yellow-500' },
-        null,
-        { sponsor: 'Wayne Ent.', event: 'Cultural Fest', status: 'Closed', color: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-500' },
-        null,
-        { sponsor: 'Global Co.', event: 'Workshop', status: 'Cold', color: 'bg-gray-100 text-gray-700', dot: 'bg-gray-400' },
-    ];
 
     return (
         <div className="bg-white dark:bg-[#111] rounded-[1.5rem] p-5 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.1)] border border-zinc-100 dark:border-zinc-800 flex flex-col h-full w-full overflow-hidden transition-colors">
@@ -44,7 +34,11 @@ export function HorizontalCalendarCard() {
                 <div className="flex gap-3 items-center justify-between flex-1 overflow-x-auto px-1">
                     {days.map((day, idx) => {
                         const isToday = idx === 1;
-                        const followUp = dummyFollowUps[idx];
+                        const dayEvents = events.filter((event) => {
+                            const eventDate = new Date(event.start?.dateTime || event.start?.date);
+                            return format(eventDate, "yyyy-MM-dd") === format(day, "yyyy-MM-dd");
+                        });
+                        const followUp = dayEvents[0];
                         return (
                             <div key={idx} className="flex flex-col items-center gap-1.5 cursor-pointer shrink-0">
                                 <span className={`text-[10px] font-bold uppercase tracking-wider ${isToday ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-400 dark:text-zinc-600'}`}>
@@ -54,7 +48,7 @@ export function HorizontalCalendarCard() {
                                     {format(day, 'd')}
                                 </div>
                                 {followUp ? (
-                                    <div className={`w-1.5 h-1.5 rounded-full ${followUp.dot}`}></div>
+                                    <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
                                 ) : (
                                     <div className="w-1.5 h-1.5"></div>
                                 )}
@@ -67,7 +61,11 @@ export function HorizontalCalendarCard() {
                 <div className="flex gap-3 overflow-x-auto overflow-y-hidden pb-2 pt-1 px-1 -mx-1 snap-x scrollbar-hide flex-1 min-h-0">
                     {days.map((day, idx) => {
                         const isToday = idx === 1;
-                        const followUp = dummyFollowUps[idx];
+                        const dayEvents = events.filter((event) => {
+                            const eventDate = new Date(event.start?.dateTime || event.start?.date);
+                            return format(eventDate, "yyyy-MM-dd") === format(day, "yyyy-MM-dd");
+                        });
+                        const followUp = dayEvents[0];
                         return (
                             <div
                                 key={idx}
@@ -85,16 +83,16 @@ export function HorizontalCalendarCard() {
                                     {followUp ? (
                                         <>
                                             <span className={`text-xs font-bold truncate mb-0.5 ${isToday ? 'text-white dark:text-zinc-900' : 'text-zinc-800 dark:text-zinc-200'}`}>
-                                                {followUp.sponsor}
+                                                {followUp.summary}
                                             </span>
                                             <span className={`text-[10px] font-medium truncate mb-0.5 ${isToday ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-600 dark:text-zinc-400'}`}>
-                                                {followUp.event}
+                                                Google Event
                                             </span>
                                             <span className={`text-[10px] font-semibold mb-2 ${isToday ? 'text-zinc-400 dark:text-zinc-500' : 'text-zinc-500 dark:text-zinc-500'}`}>
-                                                Due: {format(day, 'MMM dd')}, 2pm
+                                                {new Date(followUp.start?.dateTime || followUp.start?.date).toLocaleTimeString()}
                                             </span>
-                                            <span className={`mt-auto px-2 py-0.5 rounded-md text-[9px] uppercase tracking-wide font-bold w-fit ${followUp.color}`}>
-                                                {followUp.status}
+                                            <span className="mt-auto px-2 py-0.5 rounded-md text-[9px] uppercase tracking-wide font-bold w-fit bg-blue-100 text-blue-700">
+                                                Event
                                             </span>
                                         </>
                                     ) : (

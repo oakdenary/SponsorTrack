@@ -5,7 +5,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
 const COLORS = ['#10b981', '#3b82f6', '#f43f5e', '#d19d5a', '#8b5cf6', '#f97316', '#06b6d4', '#ec4899'];
 
-export function EventSponsorsCard({ sponsorCategories }) {
+export function EventSponsorsCard({ pieData }) {
     const [isCompact, setIsCompact] = useState(false);
 
     useEffect(() => {
@@ -16,9 +16,9 @@ export function EventSponsorsCard({ sponsorCategories }) {
     }, []);
 
     // Transform API data into chart data
-    const data = (sponsorCategories || []).map((sc, idx) => ({
-        name: sc.categoryname,
-        value: sc.total,
+    const data = (pieData || []).map((sc, idx) => ({
+        name: sc.label,
+        value: sc.value,
         color: COLORS[idx % COLORS.length],
     }));
 
@@ -29,7 +29,7 @@ export function EventSponsorsCard({ sponsorCategories }) {
         <div className="bg-white dark:bg-[#111] rounded-[1.5rem] p-5 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.1)] border border-zinc-100 dark:border-zinc-800 flex flex-col h-full w-full relative overflow-hidden transition-colors">
             <div className="flex justify-between items-center mb-3 shrink-0">
                 <div className="min-w-0">
-                    <h2 className="text-zinc-900 dark:text-zinc-100 font-bold text-base tracking-tight truncate">Sponsor Categories</h2>
+                    <h2 className="text-zinc-900 dark:text-zinc-100 font-bold text-base tracking-tight truncate">Company Categories</h2>
                     <p className="text-[11px] text-zinc-500 dark:text-zinc-400 font-medium mt-0.5">Council demographic distribution</p>
                 </div>
             </div>

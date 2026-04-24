@@ -31,6 +31,7 @@ export default function LoginPage() {
             provider: "google",
             options: {
                 redirectTo: "http://localhost:3000/dashboard",
+                scopes: "https://www.googleapis.com/auth/calendar.readonly"
             },
         });
 
@@ -140,11 +141,9 @@ export default function LoginPage() {
                 transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                 className="flex-1 bg-[#E8E8E8] dark:bg-[#0c0c0c] border-l dark:border-zinc-800/60 rounded-tl-[3rem] rounded-bl-[3rem] p-12 lg:p-20 relative flex flex-col justify-between hidden md:flex z-20 shadow-[-10px_0_30px_rgba(0,0,0,0.1)] transition-colors"
             >
-                {/* LOGO SPACE */}
-                <div className="flex justify-center mb-12">
-                    <div className="bg-zinc-900 text-white text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full w-fit mb-12">
-                        LOGO SPACE
-                    </div>
+                {/* Logo Area */}
+                <div className="flex justify-center ">
+                     <img src="/loginlogo.png" alt="SponsorTrack Logo" className="h-34 w-auto object-contain opacity-95" />
                 </div>
 
                 <div className="flex-1 flex flex-col justify-center items-center text-center max-w-xl mx-auto">
