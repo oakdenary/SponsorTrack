@@ -55,15 +55,9 @@ export default function ProfilePage() {
                                 headers: { Authorization: `Bearer ${token}` } 
                             });
                             const dashData = await dbRes.json();
-                            const memberRes = await fetch("/api/teammembers", { cache: "no-store" });
-                            const members = await memberRes.json();
-                            const memberInfo = members.find(m => m.membername === userInfo.username && m.councilid === userInfo.councilid);
                             
-                            if (memberInfo && dashData.councilOutreach) {
-                                const rev = dashData.councilOutreach
-                                    .filter(o => (o.status === "Closed" || o.status === "Confirmed") && o.memberid === memberInfo.memberid)
-                                    .reduce((sum, o) => sum + (Number(o.deal_value) || 0), 0);
-                                setTotalRevenue(rev);
+                            if (dashData && dashData.myContribution) {
+                                setTotalRevenue(dashData.myContribution.totalValue || 0);
                             }
                         }
                     } catch (e) {

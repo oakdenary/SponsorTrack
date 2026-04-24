@@ -60,8 +60,8 @@ export function Sidebar() {
   return (
     <aside className="w-[240px] flex flex-col py-8 px-6 text-white h-full relative border-r-0 shrink-0 bg-[#161719] z-10">
       {/* Logo */}
-      <div className="w-full mb-12 flex items-center justify-center">
-        <img src="/logo.png" alt="Logo" className="h-16 w-auto object-contain opacity-90 hover:opacity-100 transition-opacity" />
+      <div className="w-full mb-6 flex items-center justify-center">
+        <img src="/logo.png" alt="Logo" className="h-32 w-auto object-contain opacity-90 hover:opacity-100 transition-opacity" />
       </div>
 
       {/* Navigation */}
